@@ -14,6 +14,8 @@
 		343FED3A2397372E00612A26 /* EditorExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 343FED392397372E00612A26 /* EditorExampleTests.swift */; };
 		343FED452397372F00612A26 /* EditorExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 343FED442397372F00612A26 /* EditorExampleUITests.swift */; };
 		343FED5723973CA500612A26 /* EditorCore in Frameworks */ = {isa = PBXBuildFile; productRef = 343FED5623973CA500612A26 /* EditorCore */; };
+		343FED592397437A00612A26 /* EditorDemo in Frameworks */ = {isa = PBXBuildFile; productRef = 343FED582397437A00612A26 /* EditorDemo */; };
+		343FED5B239756E800612A26 /* EditorUI in Frameworks */ = {isa = PBXBuildFile; productRef = 343FED5A239756E800612A26 /* EditorUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,7 +56,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				343FED592397437A00612A26 /* EditorDemo in Frameworks */,
 				343FED5723973CA500612A26 /* EditorCore in Frameworks */,
+				343FED5B239756E800612A26 /* EditorUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +164,8 @@
 			name = "macOS Application";
 			packageProductDependencies = (
 				343FED5623973CA500612A26 /* EditorCore */,
+				343FED582397437A00612A26 /* EditorDemo */,
+				343FED5A239756E800612A26 /* EditorUI */,
 			);
 			productName = EditorExample;
 			productReference = 343FED232397372D00612A26 /* macOS Application.app */;
@@ -605,6 +611,14 @@
 		343FED5623973CA500612A26 /* EditorCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = EditorCore;
+		};
+		343FED582397437A00612A26 /* EditorDemo */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = EditorDemo;
+		};
+		343FED5A239756E800612A26 /* EditorUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = EditorUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

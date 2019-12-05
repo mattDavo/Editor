@@ -16,6 +16,12 @@ let package = Package(
         .library(
             name: "EditorCore",
             targets: ["EditorCore"]),
+        .library(
+            name: "EditorDemo",
+            targets: ["EditorDemo"]),
+        .library(
+            name: "EditorUI",
+            targets: ["EditorUI"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -30,5 +36,11 @@ let package = Package(
         .testTarget(
             name: "EditorCoreTests",
             dependencies: ["EditorCore"]),
+        .target(
+            name: "EditorDemo",
+            dependencies: ["EditorCore"]),
+        .target(
+            name: "EditorUI",
+            dependencies: ["EditorCore"])
     ]
 )
