@@ -55,6 +55,12 @@ public class EditorTextStorage: NSTextStorage {
         endEditing()
     }
     
+    func checkEOF() {
+        if string.isEmpty || string.last != "\n" {
+            append(NSAttributedString(string: "\n"))
+        }
+    }
+    
     func processSyntaxHighlighting(grammar: Grammar, theme: Theme) {
         var lines = grammar.theme(lines: string.split(separator: "\n", omittingEmptySubsequences: false).map({String($0 + "\n")}), withTheme: theme)
         lines.removeLast()

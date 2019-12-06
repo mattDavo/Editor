@@ -18,6 +18,9 @@ class ViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        view.window?.saveFrame(usingName: NSWindow.FrameAutosaveName(stringLiteral: "Main"))
+        view.window?.setFrameUsingName(NSWindow.FrameAutosaveName(stringLiteral: "Main"))
 
         let lines = """
 Hello cat
@@ -39,13 +42,15 @@ This shouldn't be commented
 */
 
 _Italic_ *Bold* _Italic and *bold*_ *Bold and _italic_*
+
 """
-        
+        textView.insertionPointColor = .systemBlue
         textView.string = lines
         
-        let grammar = Grammar.test.test03
+        let grammar = Grammar.test.test05
         grammar.shouldDebug = false
         editor = Editor(textView: textView, grammar: grammar, theme: Theme.tests.basic)
+        
         editor.highlightSyntax()
     }
     

@@ -32,7 +32,7 @@ extension Theme {
             ThemeSetting(scope: "variable", parentScopes: [], attributes: []),
             ThemeSetting(scope: "source", parentScopes: [], attributes: [
                 ColorThemeAttribute(color: .textColor),
-                FontThemeAttribute(font: .systemFont(ofSize: 12)),
+                FontThemeAttribute(font: .monospacedSystemFont(ofSize: 20)),
                 ParagraphSpacingBeforeThemeAttribute(spacing: 5),
                 ParagraphSpacingAfterThemeAttribute(spacing: 5)
             ]),
@@ -40,9 +40,13 @@ extension Theme {
                 ColorThemeAttribute(color: .systemTeal)
             ]),
             ThemeSetting(scope: "markup.bold", parentScopes: [], attributes: [
-                FontThemeAttribute(font: .boldSystemFont(ofSize: 12))
+                BoldThemeAttribute()
             ]),
             ThemeSetting(scope: "markup.italic", parentScopes: [], attributes: [
+                ItalicThemeAttribute()
+            ]),
+            ThemeSetting(scope: "markup.mono", parentScopes: [], attributes: [
+                BackgroundColorThemeAttribute(color: .gray, rounded: true),
             ]),
             ThemeSetting(scope: "action", parentScopes: [], attributes: [
                 ActionThemeAttribute(linkId: "test")
@@ -50,3 +54,33 @@ extension Theme {
         ])
     }
 }
+
+
+#if os(iOS)
+import UIKit
+
+extension UIFont {
+
+    class func italicSystemFont(ofSize size: CGFloat) -> UIFont {
+        var symTraits = fontDescriptor().symbolicTraits
+        symTraits.insert([.TraitBold])
+        let fontDescriptorVar = fontDescriptor().fontDescriptorWithSymbolicTraits(symTraits)
+        return UIFont(descriptor: fontDescriptorVar, size: size)
+    }
+}
+
+#elseif os(macOS)
+import Cocoa
+extension NSFont {
+    class func italicSystemFont(ofSize size: CGFloat) -> NSFont {
+        return NSFont(descriptor: NSFontDescriptor().withSymbolicTraits(.italic), size: size)!
+    }
+}
+
+extension NSFont {
+    class func monospacedSystemFont(ofSize size: CGFloat) -> NSFont {
+        return NSFont(name: "SpaceMono-Regular", size: size)!
+    }
+}
+
+#endif

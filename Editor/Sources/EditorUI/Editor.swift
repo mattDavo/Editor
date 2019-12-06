@@ -33,9 +33,7 @@ public class Editor: NSObject {
         self.theme = theme
         super.init()
         
-        textView.isRichText = false
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.allowsUndo = true
+        textView.delegate = self
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)
     }
@@ -52,6 +50,11 @@ public class Editor: NSObject {
 extension Editor: NSTextViewDelegate {
     
     public func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+        return true
+    }
+    
+    public func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        // TODO: Implement a nice action when deleting last line, so that the last line isn't deleted but the caret moves.
         return true
     }
 }

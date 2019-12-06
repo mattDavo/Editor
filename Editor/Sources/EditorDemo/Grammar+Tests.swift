@@ -75,5 +75,41 @@ extension Grammar {
                 ]
             )
         )
+        
+        public static let test05 = Grammar(
+            scopeName: "source.test.05",
+            fileTypes: [],
+            patterns: [
+                MatchRule(name: "keyword.special.cat", match: "[Cc]at"),
+                MatchRule(name: "keyword.special.dog", match: "[Dd]og"),
+                MatchRule(name: "action", match: "@[^\\s]+"),
+                BeginEndRule(
+                    name: "string.quoted.double",
+                    begin: "\"",
+                    end: "\"",
+                    patterns: [
+                        BeginEndRule(
+                            name: "source.test.03",
+                            begin: #"\\\("#,
+                            end: #"\)"#,
+                            patterns: [
+                                IncludeGrammarPattern()
+                            ]
+                        )
+                    ]
+                ),
+                BeginEndRule(name: "comment.line.double-slash", begin: "//", end: "\\n", patterns: [IncludeRulePattern(include: "todo")]),
+                BeginEndRule(name: "comment.block", begin: "/\\*", end: "\\*/", patterns: [IncludeRulePattern(include: "todo")]),
+                IncludeRulePattern(include: "bold"),
+                IncludeRulePattern(include: "italic"),
+                IncludeRulePattern(include: "mono")
+            ],
+            repository: Repository(patterns: [
+                "todo": MatchRule(name: "comment.keyword.todo", match: "TODO"),
+                "bold": BeginEndRule(name: "markup.bold", begin: "\\*", end: "\\*", patterns: [IncludeRulePattern(include: "italic")]),
+                "italic": BeginEndRule(name: "markup.italic", begin: "_", end: "_", patterns: [IncludeRulePattern(include: "bold")]),
+                "mono": BeginEndRule(name: "markup.mono", begin: "`", end: "`", patterns: [IncludeRulePattern(include: "bold"), IncludeRulePattern(include: "italic")])
+            ])
+        )
     }
 }
