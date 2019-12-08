@@ -52,11 +52,6 @@ extension Editor: NSTextViewDelegate {
     public func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
         return true
     }
-    
-    public func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
-        // TODO: Implement a nice action when deleting last line, so that the last line isn't deleted but the caret moves.
-        return true
-    }
 }
 
 #endif

@@ -40,7 +40,7 @@ _Italic_ *Bold* _Italic and *bold*_ *Bold and _italic_*
         textView.string = lines
         
         let grammar = Grammar.test.test05
-        grammar.shouldDebug = false
+        grammar.shouldDebug = true
         editor = Editor(textView: textView, grammar: grammar, theme: Theme.tests.basic)
         
         editor.highlightSyntax()

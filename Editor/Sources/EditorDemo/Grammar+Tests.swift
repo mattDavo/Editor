@@ -79,8 +79,8 @@ extension Grammar {
             scopeName: "source.test.05",
             fileTypes: [],
             patterns: [
-                MatchRule(name: "keyword.special.cat", match: "[Cc]at"),
-                MatchRule(name: "keyword.special.dog", match: "[Dd]og"),
+                MatchRule(name: "keyword.special.cat", match: "\\b[Cc]at\\b"),
+                MatchRule(name: "keyword.special.dog", match: "\\b[Dd]og\\b"),
                 MatchRule(name: "action", match: "@[^\\s]+"),
                 BeginEndRule(
                     name: "string.quoted.double",

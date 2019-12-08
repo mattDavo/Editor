@@ -254,8 +254,8 @@ public class Grammar {
         do {
             let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
             
-            // Must be anchored to the start of the range
-            var options = NSRegularExpression.MatchingOptions.anchored
+            // Must be anchored to the start of the range and enforce word boundaries
+            var options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds)
             
             // Enforce ^ and $ for strings not at the start
             // Essentially ensuring if the pattern is anchored to the start and loc != 0, it will not match
@@ -281,8 +281,8 @@ public class Grammar {
         do {
             let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
             
-            // Must be anchored to the start of the range
-            var options = NSRegularExpression.MatchingOptions.anchored
+            // Must be anchored to the start of the range and enforce word boundaries
+            var options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds)
             
             // Enforce ^ and $ for strings not at the start
             // Essentially ensuring if the pattern is anchored to the start and loc != 0, it will not match
