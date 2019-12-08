@@ -114,14 +114,109 @@ public class Grammar {
                 // Apply the match rule
                 if let rule = rule as? MatchRule {
                     if let newPos = matches(pattern: rule.match, str: line, at: loc) {
+                        // Set matched flag
                         matched = true
-                        // Old
+                        // Create a new scope
                         var scope = Scope(name: rule.name, rules: [], attributes: [])
+                        // Add theme attributes if we have a theme
                         if let theme = theme {
                             scope.attributes = theme.attributes(forScope: scope.name)
                         }
-                        tokenizedLine.addToken(Token(range: NSRange(location: loc, length: newPos - loc), scopes: state.scopes + [scope]))
                         
+                        // Create ordered list of tokens
+                        // Start with just one token for the entire range of the match.
+                        // This will be manipulated if there are capture groups.
+                        var tokens = [Token(range: NSRange(location: loc, length: newPos - loc), scopes: state.scopes + [scope])]
+                        
+                        // Apply capture groups
+                        for (i, (captureText, captureRange)) in captures(pattern: rule.match, str: line, at: loc).enumerated() {
+                            guard i < rule.captures.count else {
+                                // No capture defined for this (or further) capture(/s).
+                                break
+                            }
+                            // Get the capture definition from the rule
+                            let capture = rule.captures[i]
+                            // Create a scope for the capture.
+                            var captureScope = Scope(name: capture.name ?? "", rules: capture.resolveRules(grammar: self))
+                            // Apply the theme to the scope
+                            if let theme = theme {
+                                captureScope.attributes = theme.attributes(forScope: captureScope.name)
+                            }
+                            // Create the capture state (the current state, with the capture state)
+                            let captureState = LineState(scopes: state.scopes + [captureScope])
+                            
+                            // Use tokenize on the capture as if it was an entire line.
+                            var captureLine = tokenize(line: captureText, state: captureState, withTheme: theme)
+                            
+                            // Adjust the range of tokens to account for the location of the capture.
+                            captureLine.tokens = captureLine.tokens.map({
+                                var new = $0
+                                new.range.location += captureRange.location
+                                return new
+                            })
+                            
+                            // Create a new array for the new version of the list of tokens.
+                            var newTokens = [Token]()
+                            
+                            // Merge the original token list with the token list from the tokenized capture line.
+                            // Strategy:
+                            // While both lists are not empty, take the first from each list and compare.
+                            // - If the token from the original list is before the capture list we will either just add it to the new tokens list if it completely before the other token or we will split it and add the front bit to the new list.
+                            // - Otherwise, see if the two tokens have the same range. If so, we merge them add them to the list. Otherwise we will split the larger one.
+                            // - Note: the capture line tokens will never occur before the original token because captures are applied in order.
+                            while var oToken = tokens.first, var cToken = captureLine.tokens.first {
+                                // Check if the original token is before the new capture token.
+                                if oToken.range.location < cToken.range.location {
+                                    var new = oToken
+                                    // See if they are disjoint
+                                    if oToken.range.upperBound <= cToken.range.location {
+                                        tokens.removeFirst()
+                                    }
+                                    else {
+                                        new.range.length = cToken.range.location - oToken.range.location
+                                        tokens[0].range = NSRange(location: cToken.range.location, length: oToken.range.upperBound - cToken.range.location)
+                                    }
+                                    
+                                    newTokens.append(new)
+                                    continue
+                                }
+                                
+                                // Now we can guarantee that tokens are both at the same location.
+                                guard oToken.range.location == cToken.range.location else {
+                                    fatalError("Tokens are not contiguous")
+                                }
+                                
+                                // Now three case to merge the tokens:
+                                // 1. Both are over the same range
+                                // 2. Need to split cToken
+                                // 3. Need to split oToken
+                                if oToken.range.upperBound == cToken.range.upperBound {
+                                    tokens.removeFirst()
+                                    captureLine.tokens.removeFirst()
+                                }
+                                else if oToken.range.upperBound < cToken.range.upperBound {
+                                    captureLine.tokens[0].range = NSRange(location: oToken.range.upperBound, length: cToken.range.upperBound - oToken.range.upperBound)
+                                    cToken.range.length = oToken.range.length
+                                    tokens.removeFirst()
+                                }
+                                else {
+                                    tokens[0].range = NSRange(location: cToken.range.upperBound, length: oToken.range.upperBound - cToken.range.upperBound)
+                                    oToken.range.length = cToken.range.length
+                                    captureLine.tokens.removeFirst()
+                                }
+                                // Merge the capture token onto the original token.
+                                newTokens.append(oToken.mergedWith(cToken))
+                            }
+                            // At least one of tokens or capture line tokens will be empty so it safe to just append one of them.
+                            newTokens += tokens + captureLine.tokens
+                            
+                            // Update the tokens.
+                            tokens = newTokens
+                        }
+                        
+                        tokenizedLine.addTokens(tokens)
+                        
+                        // Prepare for next char.
                         loc = newPos
                         tokenizedLine.addToken(Token(range: NSRange(location: loc, length: 0), scopes: state.scopes))
                         break
@@ -131,7 +226,6 @@ public class Grammar {
                 else if let rule = rule as? BeginEndRule {
                     if let newPos = matches(pattern: rule.begin, str: line, at: loc) {
                         matched = true
-                        // Old
                         var scope = Scope(name: rule.name, rules: rule.resolveRules(grammar: self), end: rule.end)
                         if let theme = theme {
                             scope.attributes = theme.attributes(forScope: scope.name)
@@ -180,6 +274,39 @@ public class Grammar {
             print(error)
             print("pattern: \(pattern), str: \(str), loc: \(loc)")
             return nil
+        }
+    }
+    
+    func captures(pattern: String, str: String, at loc: Int) -> [(String, NSRange)] {
+        let range = NSRange(location: loc, length: str.count - loc)
+        do {
+            let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
+            
+            // Must be anchored to the start of the range
+            var options = NSRegularExpression.MatchingOptions.anchored
+            
+            // Enforce ^ and $ for strings not at the start
+            // Essentially ensuring if the pattern is anchored to the start and loc != 0, it will not match
+            if loc != 0 {
+                options.update(with: .withoutAnchoringBounds)
+            }
+            
+            if let match = exp.firstMatch(in: str, options: options, range: range) {
+                return (0..<match.numberOfRanges).map { i -> (String, NSRange) in
+                    let captureRange = match.range(at: i)
+                    let startIndex = str.index(str.startIndex, offsetBy: captureRange.location)
+                    let endIndex = str.index(str.startIndex, offsetBy: captureRange.upperBound)
+                    return (String(str[startIndex..<endIndex]), match.range(at: i))
+                }
+            }
+            else {
+                return []
+            }
+        }
+        catch {
+            print(error)
+            print("pattern: \(pattern), str: \(str), loc: \(loc)")
+            return []
         }
     }
     

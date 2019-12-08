@@ -19,30 +19,22 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.window?.saveFrame(usingName: NSWindow.FrameAutosaveName(stringLiteral: "Main"))
-        view.window?.setFrameUsingName(NSWindow.FrameAutosaveName(stringLiteral: "Main"))
-
         let lines = """
-Hello cat
-Catttt, cat dog cat
-
-Hello cat
-He said \"Yeah\"
-She said \"cat\"
-Dogs are better than cats.
-Cat should be detected in \"\\(cat)\"
-
 Keywords are dog, Dog, cat and Cat
-You're allowed strings: \"It's raining cats and dogs\"
+
+You're allowed strings: "It's raining cats and dogs"
+
 And string interpolation: \"\\(Wow cat dog)\"
+
 Testing out // comments
+
 This shouldn't be commented
+
 /*
-* TODO: Woo comment block
-*/
+ * TODO: Woo comment block
+ */
 
 _Italic_ *Bold* _Italic and *bold*_ *Bold and _italic_*
-
 """
         textView.insertionPointColor = .systemBlue
         textView.string = lines
@@ -54,11 +46,6 @@ _Italic_ *Bold* _Italic and *bold*_ *Bold and _italic_*
         editor.highlightSyntax()
     }
     
-    func reduceAttrString(_ result: NSMutableAttributedString, _ elm: NSAttributedString) -> NSMutableAttributedString {
-        result.append(elm)
-        return result
-    }
-
     override var representedObject: Any? {
         didSet {
         // Update the view, if already loaded.

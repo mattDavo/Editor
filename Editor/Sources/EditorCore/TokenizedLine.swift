@@ -16,6 +16,11 @@ public struct TokenizedLine {
         tokens.append(token)
     }
     
+    mutating func addTokens(_ tokens: [Token]) {
+        cleanLast()
+        self.tokens += tokens
+    }
+    
     mutating func cleanLast() {
         if tokens.last?.range.length == 0 {
             tokens.removeLast()

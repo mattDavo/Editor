@@ -102,13 +102,33 @@ extension Grammar {
                 BeginEndRule(name: "comment.block", begin: "/\\*", end: "\\*/", patterns: [IncludeRulePattern(include: "todo")]),
                 IncludeRulePattern(include: "bold"),
                 IncludeRulePattern(include: "italic"),
-                IncludeRulePattern(include: "mono")
+                IncludeRulePattern(include: "mono"),
+                IncludeRulePattern(include: "test")
             ],
             repository: Repository(patterns: [
                 "todo": MatchRule(name: "comment.keyword.todo", match: "TODO"),
-                "bold": BeginEndRule(name: "markup.bold", begin: "\\*", end: "\\*", patterns: [IncludeRulePattern(include: "italic")]),
-                "italic": BeginEndRule(name: "markup.italic", begin: "_", end: "_", patterns: [IncludeRulePattern(include: "bold")]),
-                "mono": BeginEndRule(name: "markup.mono", begin: "`", end: "`", patterns: [IncludeRulePattern(include: "bold"), IncludeRulePattern(include: "italic")])
+                "bold": MatchRule(name: "markup.bold", match: "\\*.*?\\*", captures: [
+                    Capture(patterns: [
+                        IncludeRulePattern(include: "italic")
+                    ])
+                ]),
+                "italic": MatchRule(name: "markup.italic", match: "_.*?_", captures: [
+                    Capture(patterns: [
+                        IncludeRulePattern(include: "bold")
+                    ])
+                ]),
+                "mono": MatchRule(name: "markup.mono", match: "`.*?`", captures: [
+                    Capture(patterns: [
+                        IncludeRulePattern(include: "bold"),
+                        IncludeRulePattern(include: "italic")
+                    ])
+                ]),
+                "test": MatchRule(name: "test", match: "\\+((Hello) (world))\\+", captures: [
+                    Capture(),
+                    Capture(name: "Hello world"),
+                    Capture(name: "Hello"),
+                    Capture(name: "world")
+                ])
             ])
         )
     }

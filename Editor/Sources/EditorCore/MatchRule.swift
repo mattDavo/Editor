@@ -11,12 +11,12 @@ import Foundation
 public class MatchRule: Rule, Pattern {
     var name: String
     var match: String
-    var captures: [String]
+    var captures: [Capture]
     
     public init(
         name: String,
         match: String,
-        captures: [String] = []
+        captures: [Capture] = []
     ) {
         self.name = name
         self.match = match

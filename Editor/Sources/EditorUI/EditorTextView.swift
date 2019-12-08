@@ -82,6 +82,7 @@ public class EditorTextView: NSTextView {
         storage.endEditing()
     }
     
+    // Courtesy of: https://christiantietze.de/posts/2017/08/nstextview-fat-caret/
     var caretSize: CGFloat = 4
 
     open override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {
