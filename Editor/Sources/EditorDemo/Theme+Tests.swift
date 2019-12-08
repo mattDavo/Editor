@@ -58,7 +58,7 @@ extension Theme {
 #if os(iOS)
 import UIKit
 
-extension UIFont {
+public extension UIFont {
 
     class func italicSystemFont(ofSize size: CGFloat) -> UIFont {
         var symTraits = fontDescriptor().symbolicTraits
@@ -70,13 +70,13 @@ extension UIFont {
 
 #elseif os(macOS)
 import Cocoa
-extension NSFont {
+public extension NSFont {
     class func italicSystemFont(ofSize size: CGFloat) -> NSFont {
         return NSFont(descriptor: NSFontDescriptor().withSymbolicTraits(.italic), size: size)!
     }
 }
 
-extension NSFont {
+public extension NSFont {
     class func monospacedSystemFont(ofSize size: CGFloat) -> NSFont {
         return NSFont(name: "SpaceMono-Regular", size: size)!
     }

@@ -82,6 +82,15 @@ extension Grammar {
                 MatchRule(name: "keyword.special.cat", match: "\\b[Cc]at\\b"),
                 MatchRule(name: "keyword.special.dog", match: "\\b[Dd]og\\b"),
                 MatchRule(name: "action", match: "@[^\\s]+"),
+                MatchRule(name: "markdown.link", match: "\\[(.*)\\]\\((.*)\\)", captures: [
+                    Capture(),
+                    Capture(name: "markdown.link.name"),
+                    Capture(name: "markdown.link.link")
+                ]),
+                MatchRule(name: "", match: "\\|(.*)\\|", captures: [
+                    Capture(),
+                    Capture(name: "hidden")
+                ]),
                 BeginEndRule(
                     name: "string.quoted.double",
                     begin: "\"",
