@@ -7,13 +7,29 @@
 
 import Foundation
 
+///
+/// The representation of a capture definition.
+///
+/// Captures can have apply a name (scope) and/or patterns to the captured text.
+///
+/// The capture group that this `Capture` is applied to is determined by its position in its rules' captures array.
+///
 public class Capture {
     
+    /// Optional scope to apply to the capture.
     var name: String?
+    
+    /// Patterns to apply to the capture.
     var patterns: [Pattern]
     
+    /// The lazy resolved rules from the patterns.
     private var rules: [Rule]?
     
+    /// Creates a capture.
+    ///
+    /// - parameter name: Scope to apply to the capture.
+    /// - parameter patterns: Patterns to apply to the capture.
+    ///
     public init(name: String? = nil, patterns: [Pattern] = []) {
         self.name = name
         self.patterns = patterns
@@ -31,38 +47,3 @@ public class Capture {
         return rules
     }
 }
-
-/*
- 
- How are captures applied.
- 
- MatchRule:
- Once a match rule is matched.
- We get all the matches.
- We get all the match rules.
- 
- Treat each capture as a new "Line" aiming to produce a new tokenized line for each capture then apply those tokenized lines on to the actual tokenized line
- For each matching pair in order:
-    If there is a name, apply the name to the
- 
-name: "",
-match: "",
-captures: [
-   Just straight up apply the name to the match. Doesn't make much sense on 0, but does for other matches.
-   0: {
-       name
-   }
-   Apply the patterns to the match. Kind of like recursing.
-   1: {
-       patterns = []
-   }
-   Apply the name to the match and then the patterns, kind of like recursing.
-   2: {
-       name
-       patterns = []
-   }
-]
-
-
-
-*/

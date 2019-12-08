@@ -1,9 +1,8 @@
 //
 //  BeginEndRule.swift
-//  TM-Tokenizer
+//
 //
 //  Created by Matthew Davidson on 26/11/19.
-//  Copyright © 2019 Matt Davidson. All rights reserved.
 //
 
 import Foundation
@@ -25,6 +24,8 @@ public class BeginEndRule: Rule, Pattern {
     ///
     /// Ensure special characters are escaped correctly.
     var end: String
+    
+    /// The patterns to apply within the begin and end patterns.
     var patterns: [Pattern]
     
     /// The name/scope assigned to text matched between the begin/end patterns.
