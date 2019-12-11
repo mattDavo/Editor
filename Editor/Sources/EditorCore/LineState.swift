@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct LineState {
+public struct LineState: Equatable {
     var scopes: [Scope]
     
     var currentScope: Scope? {
@@ -16,5 +16,9 @@ struct LineState {
     
     var scopeNames: [String] {
         return scopes.map({$0.name})
+    }
+    
+    public static func == (lhs: LineState, rhs: LineState) -> Bool {
+        return lhs.scopes == rhs.scopes
     }
 }

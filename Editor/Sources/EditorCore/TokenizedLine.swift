@@ -8,8 +8,9 @@
 import Foundation
 
 public struct TokenizedLine {
-    var tokens: [Token]
-    var state: LineState
+    
+    public var tokens: [Token]
+    public var state: LineState
     
     mutating func addToken(_ token: Token) {
         cleanLast()

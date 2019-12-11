@@ -60,13 +60,21 @@ public class Grammar {
         return zip(tokenize(lines: lines, withTheme: theme), lines).map{$0.0.getThemedLine(line: $0.1)}
     }
     
-    public func tokenize(lines: [String], withTheme theme: Theme? = nil) -> [TokenizedLine] {
-        debug("\n\n///////// TOKENIZING WITH GRAMMAR: \(scopeName) /////////")
+    public func theme(lines: [String], tokenizedLines: [TokenizedLine], withTheme theme: Theme) -> [NSAttributedString] {
+        return zip(tokenizedLines, lines).map{$0.0.getThemedLine(line: $0.1)}
+    }
+    
+    public func createFirstLineState(theme: Theme? = nil) -> LineState {
         var scope = Scope(name: scopeName, rules: rules, end: nil)
         if let theme = theme {
             scope.attributes = theme.attributes(forScope: scope.name)
         }
-        var state = LineState(scopes: [scope])
+        return LineState(scopes: [scope])
+    }
+    
+    public func tokenize(lines: [String], withTheme theme: Theme? = nil) -> [TokenizedLine] {
+        debug("\n\n///////// TOKENIZING WITH GRAMMAR: \(scopeName) /////////")
+        var state = createFirstLineState(theme: theme)
         var tokenizedLines = [TokenizedLine]()
         for line in lines {
             debug("Tokenizing line: \(line)")
@@ -83,7 +91,7 @@ public class Grammar {
         return tokenizedLines
     }
     
-    func tokenize(line: String, state: LineState, withTheme theme: Theme? = nil) -> TokenizedLine {
+    public func tokenize(line: String, state: LineState, withTheme theme: Theme? = nil) -> TokenizedLine {
         var state = state
         var tokenizedLine = TokenizedLine(tokens: [Token(range: NSRange(location: 0, length: 0), scopes: state.scopes)], state: state)
         

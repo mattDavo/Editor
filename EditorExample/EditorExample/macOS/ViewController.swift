@@ -57,7 +57,6 @@ let theme = Theme(name: "basic", settings: [
 public extension Font {
     
     class func hiddenFont() -> Font {
-        print(NSFontManager.shared.availableFonts)
         return Font(name: "AdobeBlank", size: 10)!
     }
 }
@@ -95,8 +94,6 @@ _Italic_ *Bold* _Italic and *bold*_ *Bold and _italic_*
         let grammar = Grammar.test.test05
         grammar.shouldDebug = false
         editor = Editor(textView: textView, grammar: grammar, theme: theme)
-        
-        editor.highlightSyntax()
     }
     
     override var representedObject: Any? {

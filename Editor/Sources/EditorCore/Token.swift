@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Token {
+public struct Token {
     var range: NSRange
     var scopes: [Scope]
     var scopeNames: [String] {

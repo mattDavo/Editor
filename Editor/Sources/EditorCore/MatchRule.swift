@@ -8,6 +8,9 @@
 import Foundation
 
 public class MatchRule: Rule, Pattern {
+    
+    public let id: UUID
+    
     var name: String
     var match: String
     var captures: [Capture]
@@ -17,6 +20,7 @@ public class MatchRule: Rule, Pattern {
         match: String,
         captures: [Capture] = []
     ) {
+        self.id = UUID()
         self.name = name
         self.match = match
         self.captures = captures

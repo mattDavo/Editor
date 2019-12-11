@@ -32,6 +32,17 @@ public class EditorTextView: NSTextView {
         }
     }
     
+    private var _grammar: Grammar = .default
+    private var _theme: Theme = .default
+    
+    public var grammar: Grammar {
+        return _grammar
+    }
+    
+    public var theme: Theme {
+        return _theme
+    }
+    
     public override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         
@@ -57,7 +68,7 @@ public class EditorTextView: NSTextView {
         layoutManager = manager
         
         // Insert NSTextStorage subclass
-        let storage = EditorTextStorage()
+        let storage = EditorTextStorage(grammar: grammar, theme: theme)
         storage.append(attributedString())
         layoutManager?.replaceTextStorage(storage)
         
@@ -67,24 +78,29 @@ public class EditorTextView: NSTextView {
         allowsUndo = true
     }
     
-    func processSyntaxHighlighting(grammar: Grammar, theme: Theme) {
+    public func replace(grammar: Grammar, theme: Theme) {
+        _grammar = grammar
+        _theme = theme
         guard let storage = textStorage as? EditorTextStorage else {
-            print("This should not happen")
+            print("Cannot set grammar and them on text storage because it is not of type EditorTextStorage")
             return
         }
+        storage.replace(grammar: grammar, theme: theme)
+    }
+    
+    func boundingRect(forCharacterRange range: NSRange) -> CGRect? {
+        guard let layoutManager = layoutManager else { return nil }
+        guard let textContainer = textContainer else { return nil }
         
-        let prev = selectedRanges
-        storage.checkEOF()
-        selectedRanges = prev
-        
-        storage.beginEditing()
-        storage.processSyntaxHighlighting(grammar: grammar, theme: theme)
-        storage.endEditing()
+        // Convert the range for glyphs.
+        var glyphRange = NSRange()
+        layoutManager.characterRange(forGlyphRange: range, actualGlyphRange: &glyphRange)
+
+        return layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
     }
     
     // Courtesy of: https://christiantietze.de/posts/2017/08/nstextview-fat-caret/
     var caretSize: CGFloat = 4
-
     open override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {
         var rect = rect
         rect.size.width = caretSize

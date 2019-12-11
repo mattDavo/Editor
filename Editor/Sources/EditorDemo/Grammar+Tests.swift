@@ -96,14 +96,9 @@ extension Grammar {
                     begin: "\"",
                     end: "\"",
                     patterns: [
-                        BeginEndRule(
-                            name: "source.test.03",
-                            begin: #"\\\("#,
-                            end: #"\)"#,
-                            patterns: [
-                                IncludeGrammarPattern()
-                            ]
-                        )
+                        MatchRule(name: "source.test.03", match: #"\\\(.*\)"#, captures: [
+                            Capture(patterns: [IncludeGrammarPattern()])
+                        ])
                     ]
                 ),
                 BeginEndRule(name: "comment.line.double-slash", begin: "//", end: "\\n", patterns: [IncludeRulePattern(include: "todo")]),

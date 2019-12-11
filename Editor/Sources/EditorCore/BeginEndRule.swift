@@ -12,6 +12,8 @@ import Foundation
 ///
 public class BeginEndRule: Rule, Pattern {
     
+    public let id: UUID
+    
     /// The name of the rule, i.e. the scope.
     var name: String
     
@@ -47,6 +49,7 @@ public class BeginEndRule: Rule, Pattern {
         beginCaptures: [String] = [],
         endCaptures: [String] = []
     ) {
+        self.id = UUID()
         self.name = name
         self.begin = begin
         self.end = end

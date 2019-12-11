@@ -34,16 +34,32 @@ public class Editor: NSObject {
         super.init()
         
         textView.delegate = self
+        textView.replace(grammar: grammar, theme: theme)
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)
     }
 
     @objc func textViewDidChange(_ notification: Notification) {
-        textView.processSyntaxHighlighting(grammar: grammar, theme: theme)
+        didHighlightSyntax(textView: textView)
     }
     
-    public func highlightSyntax() {
-        textView.processSyntaxHighlighting(grammar: grammar, theme: theme)
+    private func didHighlightSyntax(textView: EditorTextView) {
+        guard let storage = textView.textStorage as? EditorTextStorage else {
+            return
+        }
+        
+        // Set the type attributes to that of the last character. This is important only for the line height of the empty final line in the document.
+        if storage.length > 0 {
+            textView.typingAttributes = storage.attributes(at: storage.length-1, effectiveRange: nil)
+        }
+        
+        // Layout the view for the invalidated range.
+        if let rect = textView.boundingRect(forCharacterRange: storage.lastInvalidatedRange) {
+            textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
+        }
+        else {
+            textView.needsDisplay = true
+        }
     }
 }
 
