@@ -8,8 +8,11 @@
 import Foundation
 import EditorCore
 
-#if os(macOS)
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
 import Cocoa
+#endif
 
 public class EditorTextStorage: NSTextStorage {
     
@@ -42,6 +45,7 @@ public class EditorTextStorage: NSTextStorage {
         fatalError("\(#function) is not supported")
     }
     
+    // MARK: - Required NSTextStorage methods
     override public var string: String {
         return storage.string
     }
@@ -65,14 +69,14 @@ public class EditorTextStorage: NSTextStorage {
         endEditing()
     }
     
-    func checkEOF() {
-        if string.isEmpty || string.last != "\n" {
-            append(NSAttributedString(string: "\n"))
-        }
-    }
-    
-    @discardableResult
-    func processSyntaxHighlighting(grammar: Grammar, theme: Theme, editedRange: NSRange? = nil, changeInLength: Int? = nil) -> (NSRange, NSRange) {
+    ///
+    /// Splits the string into lines including the newline character at the end of each of line.
+    ///
+    /// - Parameter string: The string to split into lines.
+    /// - Returns: The string split into an array of newline containing lines.
+    /// - Note: if the document ends with a newline character despite the document being rendered as having an extra (empty) line, this is not actually so and is just rendered like this for a better UX. This 'fake' line will be included in the return value.
+    ///
+    private func getLines(string: String) -> [String] {
         // Split into lines with each line
         var lines = string.split(separator: "\n", omittingEmptySubsequences: false).map({String($0 + "\n")})
         // Note: even if the string is empty, lines will always have 1 element.
@@ -88,73 +92,93 @@ public class EditorTextStorage: NSTextStorage {
             fatalError("Incorrect lines array")
         }
         
-        var processingLines = (first: 0, last: lines.count-1)
-        if let editedRange = editedRange {
-            // We figure out the first line that was edited.
-            var firstEditedLine = 0
-            var location = 0
-            while firstEditedLine < lines.count {
-                if editedRange.location < location + lines[firstEditedLine].count {
-                    break
-                }
-                location += lines[firstEditedLine].count
-                firstEditedLine += 1
+        return lines
+    }
+    
+    ///
+    /// Gets the lines that need to be processed at a minimum.
+    ///
+    /// For typing edits this will normal just return that 1 or 2 lines. Paste edits will be able to return much larger ranges of lines.
+    ///
+    /// - Parameter lines: The lines to determine which need to be processed.
+    /// - Parameter editedRange: The range of characters which have been edited.
+    /// - Returns: A tuple of the first line that needs to be processed and the last line that needs to be processed.
+    ///
+    private func getProcessingLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
+        // We figure out the first line that was edited.
+        var firstEditedLine = 0
+        var location = 0
+        while firstEditedLine < lines.count {
+            if editedRange.location < location + lines[firstEditedLine].count {
+                break
             }
-            
-            // We figure out the last line that was edited.
-            var lastEditedLine = firstEditedLine
-            while lastEditedLine < lines.count {
-                if editedRange.upperBound <= location + lines[lastEditedLine].count {
-                    break
-                }
-                location += lines[lastEditedLine].count
-                lastEditedLine += 1
-            }
-            
-            // So we must re-theme at least these lines, potentially more.
-            processingLines.first = firstEditedLine
-            processingLines.last = lastEditedLine// + 1
-        }
-        else {
-            // If we don't have the edited range, we must process the entire document :(
+            location += lines[firstEditedLine].count
+            firstEditedLine += 1
         }
         
-        var haveNumberOfLinesChanged = false
-        // If we know the change in length we can determine which lines have been compromised.
-        // If the change in length is negative we have had text deleted which means that we need to remove all states from the cache that have been deleted.
-        // If the change in length is positive we have had text inserted which means that we need to shuffle down the states to make room for the changes.
-        // To do all of this we need to determine how many lines were inserted or deleted.
-        if let changeInLength = changeInLength, states.count > 0 {
-            let change = abs(lines.count - states.count + 1)
-            let first = processingLines.first
-            
-            print("Number of lines: \(lines.count)")
-            print("Number of saved states: \(states.count)")
-            print("First line change: \(processingLines.first)")
-            print("Lines add/deleted: \(change)")
-            
-            for _ in 0..<change {
-                if changeInLength < 0 {
-                    states.remove(at: first+1)
+        // We figure out the last line that was edited.
+        var lastEditedLine = firstEditedLine
+        while lastEditedLine < lines.count {
+            if editedRange.upperBound <= location + lines[lastEditedLine].count {
+                break
+            }
+            location += lines[lastEditedLine].count
+            lastEditedLine += 1
+        }
+        
+        // We add 1 to the last edited line if a newline was the last character of the edit to extend the edited range to enforce checking the new line as well.
+        if editedRange.length > 0 && lines.joined()[editedRange.upperBound - 1] == "\n" {
+            lastEditedLine += 1
+        }
+        
+        // Cap the last line incase the position is at the end of the document, which is technically after the last line.
+        lastEditedLine = min(lastEditedLine, lines.count - 1)
+        
+        return (firstEditedLine, lastEditedLine)
+    }
+    
+    ///
+    /// Modifies the length of the states array based on the first edited line to prepare for the processing based of the previous states.
+    ///
+    /// - Parameter firstEditedLine: The first line that was edited.
+    /// - Parameter changeInLines: The number of lines added or deleted.
+    ///
+    private func adjustStates(firstEditedLine: Int, changeInLines: Int) {
+        if states.count > 0 {
+            for _ in 0..<abs(changeInLines) {
+                if changeInLines < 0 {
+                    states.remove(at: firstEditedLine + 1)
                 }
                 else {
-                    states.insert(nil, at: first+1)
+                    states.insert(nil, at: firstEditedLine + 1)
                 }
             }
-            
-            if change > 0 {
-                haveNumberOfLinesChanged = true
-            }
+        }
+    }
+    
+    ///
+    /// Processes syntax highlighting on the minimum range possible.
+    ///
+    /// - Parameter editedRange: The range of the edit, if known. If the edited range is  provided the syntax highlighting will be done by processing the least amount of the document as possible using the pevious state of the document.
+    /// - Returns: A tuple containing the edited range and the invalidated range. The edited range is the range of the string that was processed and attributes were applied. The invalidated range is the range of characters that were changed as a result of the edit, e.g. if lines were added or deleted, it will included all of the lines afterwards, so we can re-render the view.
+    ///
+    func processSyntaxHighlighting(editedRange: NSRange? = nil) -> (NSRange, NSRange) {
+        // Split the string into lines.
+        let lines = getLines(string: string)
+        
+        // Default the processing lines to the entire document.
+        var processingLines = (first: 0, last: lines.count-1)
+        
+        // Calculate the change in number of lines and adjust the states array
+        let change = lines.count - states.count + 1
+        
+        // If we know the edited range and have cached states for the lines we do not need to process the entire string, we can simply on process the lines that have changed or lines afterwards that have been affected by the change.
+        if let editedRange = editedRange, !states.isEmpty {
+            processingLines = getProcessingLines(lines: lines, editedRange: editedRange)
+            adjustStates(firstEditedLine: processingLines.first, changeInLines: change)
         }
         
-        // Need to check we have a cache
-        if states.count <= processingLines.first {
-            processingLines.first = max(states.count - 1, 0)
-        }
-        
-        // Cap the last line incase of any deletions
-        processingLines.last = min(processingLines.last, lines.count - 1)
-        
+        // Initialise the cache if it is empty.
         if states.isEmpty {
             states.append(grammar.createFirstLineState(theme: theme))
         }
@@ -185,6 +209,7 @@ public class EditorTextStorage: NSTextStorage {
                 states.append(tokenizedLine.state)
             }
             
+            // Process next line
             processingLine += 1
         }
         
@@ -209,15 +234,17 @@ public class EditorTextStorage: NSTextStorage {
         print("Lines processed: \(processingLines.first)-\(processingLines.first+processedLines.count-1)")
         
         let processedRange = NSRange(location: startOfProcessing, length: total.length)
-        let invalidatedRange = haveNumberOfLinesChanged ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
+        let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
         
         return (processedRange, invalidatedRange)
     }
     
     public override func processEditing() {
+        let editedRange = self.editedRange
         super.processEditing()
         
-        let (range, invalidatedRange) = processSyntaxHighlighting(grammar: grammar, theme: theme, editedRange: editedRange, changeInLength: changeInLength)
+        let (range, invalidatedRange) = processSyntaxHighlighting(editedRange: editedRange)
+        print("editedRange: \(editedRange)")
         print("Range processed: \(range)")
         print("Range invalidated: \(invalidatedRange)")
         print()
@@ -234,14 +261,5 @@ public class EditorTextStorage: NSTextStorage {
         self.theme = theme
         states = []
         edited(.editedAttributes, range: fullRange, changeInLength: 0)
-    }
-}
-
-#endif
-
-extension NSAttributedString {
-    
-    var fullRange: NSRange {
-        return NSRange(location: 0, length: length)
     }
 }

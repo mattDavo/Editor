@@ -60,6 +60,13 @@ public class Editor: NSObject {
         else {
             textView.needsDisplay = true
         }
+        
+        // Check EOF
+        let prev = textView.selectedRanges
+        if storage.string.isEmpty || storage.string.last != "\n" {
+            storage.append(NSAttributedString(string: "\n"))
+        }
+        textView.selectedRanges = prev
     }
 }
 
