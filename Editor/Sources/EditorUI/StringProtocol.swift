@@ -7,6 +7,7 @@
 
 import Foundation
 
+// From: https://stackoverflow.com/a/24144365
 extension StringProtocol {
     
     subscript(offset: Int) -> Character { self[index(startIndex, offsetBy: offset)] }
