@@ -30,7 +30,7 @@ let theme = Theme(name: "basic", settings: [
     ThemeSetting(scope: "variable", parentScopes: [], attributes: []),
     ThemeSetting(scope: "source", parentScopes: [], attributes: [
         ColorThemeAttribute(color: .textColor),
-        FontThemeAttribute(font: .monospacedSystemFont(ofSize: 20)),
+        FontThemeAttribute(font: .monospacedSystemFont(ofSize: 18)),
         ParagraphSpacingBeforeThemeAttribute(spacing: 5),
         ParagraphSpacingAfterThemeAttribute(spacing: 5)
     ]),
@@ -51,7 +51,11 @@ let theme = Theme(name: "basic", settings: [
     ]),
     ThemeSetting(scope: "hidden", parentScopes: [], attributes: [
         FontThemeAttribute(font: .hiddenFont())
-    ])
+    ]),
+    ThemeSetting(scope: "markup.heading.1", parentScopes: [], attributes: [
+        FontThemeAttribute(font: .monospacedSystemFont(ofSize: 25)),
+        BoldThemeAttribute()
+    ]),
 ])
 
 public extension Font {
@@ -71,6 +75,8 @@ class ViewController: NSViewController {
         super.viewDidLoad()
         
         let lines = """
+# My Heading
+
 Keywords are dog, Dog, cat and Cat
 
 You're allowed strings: "It's raining cats and dogs"
@@ -87,12 +93,14 @@ This shouldn't be commented
  */
 
 _Italic_ *Bold* _Italic and *bold*_ *Bold and _italic_*
+
+Emojis are allowed 😊
 """
         textView.insertionPointColor = .systemBlue
         textView.string = lines
         
         let grammar = Grammar.test.test05
-        grammar.shouldDebug = false
+        grammar.shouldDebug = true
         editor = Editor(textView: textView, grammar: grammar, theme: theme)
     }
     

@@ -77,26 +77,20 @@ public class Grammar {
         var state = createFirstLineState(theme: theme)
         var tokenizedLines = [TokenizedLine]()
         for line in lines {
-            debug("Tokenizing line: \(line)")
             let tokenizedLine = tokenize(line: line, state: state, withTheme: theme)
             state = tokenizedLine.state
             tokenizedLines.append(tokenizedLine)
-            for token in tokenizedLine.tokens {
-                let startIndex = line.index(line.startIndex, offsetBy: token.range.location)
-                let endIndex = line.index(line.startIndex, offsetBy: token.range.upperBound)
-                debug(" - Token from \(token.range.location) to \(token.range.upperBound) '\(line[startIndex..<endIndex])' with scopes: [\(token.scopeNames.joined(separator: ", "))]")
-            }
-            debug("")
         }
         return tokenizedLines
     }
     
     public func tokenize(line: String, state: LineState, withTheme theme: Theme? = nil) -> TokenizedLine {
+        debug("Tokenizing line: \(line)")
         var state = state
         var tokenizedLine = TokenizedLine(tokens: [Token(range: NSRange(location: 0, length: 0), scopes: state.scopes)], state: state)
         
         var loc = 0
-        while (loc < line.count) {
+        while (loc < line.utf16.count) {
             // Before we apply the rules in the current scope, see if we are in a BeginEndRule and reached the end of its scope.
             if let endPattern = state.currentScope?.end {
                 if let newPos = matches(pattern: endPattern, str: line, at: loc) {
@@ -254,11 +248,18 @@ public class Grammar {
         tokenizedLine.cleanLast()
         tokenizedLine.state = state
         
+        for token in tokenizedLine.tokens {
+            let startIndex = line.utf16.index(line.utf16.startIndex, offsetBy: token.range.location)
+            let endIndex = line.utf16.index(line.utf16.startIndex, offsetBy: token.range.upperBound)
+            debug(" - Token from \(token.range.location) to \(token.range.upperBound) '\(line[startIndex..<endIndex])' with scopes: [\(token.scopeNames.joined(separator: ", "))]")
+        }
+        debug("")
+        
         return tokenizedLine
     }
     
     func matches(pattern: String, str: String, at loc: Int) -> Int? {
-        let range = NSRange(location: loc, length: str.count - loc)
+        let range = NSRange(location: loc, length: str.utf16.count - loc)
         do {
             let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
             
@@ -285,7 +286,7 @@ public class Grammar {
     }
     
     func captures(pattern: String, str: String, at loc: Int) -> [(String, NSRange)] {
-        let range = NSRange(location: loc, length: str.count - loc)
+        let range = NSRange(location: loc, length: str.utf16.count - loc)
         do {
             let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
             

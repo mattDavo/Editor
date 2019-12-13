@@ -91,6 +91,7 @@ extension Grammar {
                     Capture(),
                     Capture(name: "hidden")
                 ]),
+                MatchRule(name: "markup.heading.1", match: "^# .+$"),
                 BeginEndRule(
                     name: "string.quoted.double",
                     begin: "\"",

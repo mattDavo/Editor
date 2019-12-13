@@ -109,26 +109,32 @@ public class EditorTextStorage: NSTextStorage {
         var firstEditedLine = 0
         var location = 0
         while firstEditedLine < lines.count {
-            if editedRange.location < location + lines[firstEditedLine].count {
+            if editedRange.location < location + lines[firstEditedLine].utf16.count {
                 break
             }
-            location += lines[firstEditedLine].count
+            location += lines[firstEditedLine].utf16.count
             firstEditedLine += 1
         }
         
         // We figure out the last line that was edited.
         var lastEditedLine = firstEditedLine
         while lastEditedLine < lines.count {
-            if editedRange.upperBound <= location + lines[lastEditedLine].count {
+            if editedRange.upperBound <= location + lines[lastEditedLine].utf16.count {
                 break
             }
-            location += lines[lastEditedLine].count
+            location += lines[lastEditedLine].utf16.count
             lastEditedLine += 1
         }
         
         // We add 1 to the last edited line if a newline was the last character of the edit to extend the edited range to enforce checking the new line as well.
-        if editedRange.length > 0 && lines.joined()[editedRange.upperBound - 1] == "\n" {
-            lastEditedLine += 1
+        let text = lines.joined()
+        // Take the last edited utf16 character in the range. Since NSRanges are based on utf16 characters.
+        let u16Last = text.utf16.index(text.utf16.startIndex, offsetBy: editedRange.upperBound - 1)
+        // Find it's unicode position, and see if it is a newline
+        if let uLast = u16Last.samePosition(in: text.unicodeScalars) {
+            if text[uLast] == "\n" {
+                lastEditedLine += 1
+            }
         }
         
         // Cap the last line incase the position is at the end of the document, which is technically after the last line.
@@ -218,20 +224,18 @@ public class EditorTextStorage: NSTextStorage {
         
         let linesProcessed = grammar.theme(lines: processedLines, tokenizedLines: tokenizedLines, withTheme: theme)
         
-        let startOfProcessing = lines[0..<processingLines.first].reduce(0, {$0 + $1.count})
+        let startOfProcessing = lines[0..<processingLines.first].reduce(0, {$0 + $1.utf16.count})
         
         let total = linesProcessed.reduce(NSMutableAttributedString(), {
             $0.append($1)
             return $0
         })
         
-        total.enumerateAttributes(in: NSRange(location: 0, length: total.length), using: {
-            (attributes, range, stop) in
-            let realRange = NSRange(location: range.location + startOfProcessing, length: range.length)
-            self.setAttributes(attributes, range: realRange)
-        })
+        storage.replaceCharacters(in: NSRange(location: startOfProcessing, length: total.length), with: total)
+        // Important for fixing fonts where the font does not contain the glyph in the text, e.g. emojis.
+        fixAttributes(in: NSRange(location: startOfProcessing, length: total.length))
         
-        print("Lines processed: \(processingLines.first)-\(processingLines.first+processedLines.count-1)")
+        print("Lines processed: \(processingLines.first) to \(processingLines.first+processedLines.count-1)")
         
         let processedRange = NSRange(location: startOfProcessing, length: total.length)
         let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
