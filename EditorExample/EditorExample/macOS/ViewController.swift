@@ -104,6 +104,7 @@ Emojis are allowed 😊
 """
         textView.insertionPointColor = .systemBlue
         textView.string = lines
+        textView.replace(lineNumberGutter: LineNumberGutter(withTextView: textView))
         
         let grammar = Grammar.test.test05
         grammar.shouldDebug = true
