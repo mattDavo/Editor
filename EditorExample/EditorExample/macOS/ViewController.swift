@@ -31,8 +31,10 @@ let theme = Theme(name: "basic", settings: [
     ThemeSetting(scope: "source", parentScopes: [], attributes: [
         ColorThemeAttribute(color: .textColor),
         FontThemeAttribute(font: .monospacedSystemFont(ofSize: 18)),
-        ParagraphSpacingBeforeThemeAttribute(spacing: 5),
-        ParagraphSpacingAfterThemeAttribute(spacing: 5)
+        LineHeightThemeAttribute(min: 30, max: 30),
+        FirstLineHeadIndentThemeAttribute(value: 30),
+        TailIndentThemeAttribute(value: -30),
+        HeadIndentThemeAttribute(value: 30)
     ]),
     ThemeSetting(scope: "comment.keyword", parentScopes: [], attributes: [
         ColorThemeAttribute(color: .systemTeal)
@@ -54,8 +56,12 @@ let theme = Theme(name: "basic", settings: [
     ]),
     ThemeSetting(scope: "markup.heading.1", parentScopes: [], attributes: [
         FontThemeAttribute(font: .monospacedSystemFont(ofSize: 25)),
-        BoldThemeAttribute()
+        FirstLineHeadIndentThemeAttribute(value: 2)
     ]),
+    ThemeSetting(scope: "markup.center", parentScopes: [], attributes: [
+        BackgroundColorThemeAttribute(color: NSColor.gray, rounded: true),
+        TextAlignmentThemeAttribute(value: .center)
+    ])
 ])
 
 public extension Font {

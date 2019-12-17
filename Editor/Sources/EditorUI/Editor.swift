@@ -35,6 +35,7 @@ public class Editor: NSObject {
         
         textView.delegate = self
         textView.replace(grammar: grammar, theme: theme)
+        textView.textContainerInset = NSSize(width: 20, height: 20)
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)
     }

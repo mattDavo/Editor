@@ -261,16 +261,11 @@ public class Grammar {
     func matches(pattern: String, str: String, at loc: Int) -> Int? {
         let range = NSRange(location: loc, length: str.utf16.count - loc)
         do {
-            let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
+            let exp = try NSRegularExpression(pattern: pattern, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
             
-            // Must be anchored to the start of the range and enforce word boundaries
-            var options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds)
+            // Must be anchored to the start of the range and enforce word and line boundaries
+            let options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds).union(.withoutAnchoringBounds)
             
-            // Enforce ^ and $ for strings not at the start
-            // Essentially ensuring if the pattern is anchored to the start and loc != 0, it will not match
-            if loc != 0 {
-                options.update(with: .withoutAnchoringBounds)
-            }
             if let match = exp.firstMatch(in: str, options: options, range: range) {
                 return match.range.upperBound
             }
@@ -288,16 +283,10 @@ public class Grammar {
     func captures(pattern: String, str: String, at loc: Int) -> [(String, NSRange)] {
         let range = NSRange(location: loc, length: str.utf16.count - loc)
         do {
-            let exp = try NSRegularExpression(pattern: pattern, options: .anchorsMatchLines)
+            let exp = try NSRegularExpression(pattern: pattern, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
             
-            // Must be anchored to the start of the range and enforce word boundaries
-            var options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds)
-            
-            // Enforce ^ and $ for strings not at the start
-            // Essentially ensuring if the pattern is anchored to the start and loc != 0, it will not match
-            if loc != 0 {
-                options.update(with: .withoutAnchoringBounds)
-            }
+            // Must be anchored to the start of the range and enforce word and line boundaries
+            let options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds).union(.withoutAnchoringBounds)
             
             if let match = exp.firstMatch(in: str, options: options, range: range) {
                 return (0..<match.numberOfRanges).map { i -> (String, NSRange) in

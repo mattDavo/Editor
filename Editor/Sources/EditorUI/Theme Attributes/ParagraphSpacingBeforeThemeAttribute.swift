@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import EditorCore
 
 #if os(iOS)
 
@@ -22,9 +23,14 @@ public struct ParagraphSpacingBeforeThemeAttribute: ThemeAttribute {
     }
     
     public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        let style = (attrStr.attributes(at: 0, effectiveRange: nil)[.paragraphStyle] as? NSParagraphStyle) as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
+        let attr = attrStr.attributes(at: 0, effectiveRange: nil)[.paragraphStyle] as? NSParagraphStyle ?? NSParagraphStyle()
+        guard let style = attr.mutableCopy() as? NSMutableParagraphStyle else {
+            error("Couldn't create mutable copy of NSParagraphStyle.")
+            return
+        }
         style.paragraphSpacingBefore = spacing
-        attrStr.addAttribute(.paragraphStyle, value: style, range: range)
+        attrStr.addAttribute(.paragraphStyle, value: style, range: attrStr.fullRange)
     }
 }
+
 #endif

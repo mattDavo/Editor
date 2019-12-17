@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import EditorCore
 
 public struct BackgroundColorThemeAttribute: ThemeAttribute {
     

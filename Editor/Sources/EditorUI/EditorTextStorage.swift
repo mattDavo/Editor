@@ -129,7 +129,7 @@ public class EditorTextStorage: NSTextStorage {
         // We add 1 to the last edited line if a newline was the last character of the edit to extend the edited range to enforce checking the new line as well.
         let text = lines.joined()
         // Take the last edited utf16 character in the range. Since NSRanges are based on utf16 characters.
-        let u16Last = text.utf16.index(text.utf16.startIndex, offsetBy: editedRange.upperBound - 1)
+        let u16Last = text.utf16.index(text.utf16.startIndex, offsetBy: max(editedRange.upperBound - 1, 0))
         // Find it's unicode position, and see if it is a newline
         if let uLast = u16Last.samePosition(in: text.unicodeScalars) {
             if text[uLast] == "\n" {

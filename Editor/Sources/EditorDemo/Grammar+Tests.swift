@@ -107,7 +107,8 @@ extension Grammar {
                 IncludeRulePattern(include: "bold"),
                 IncludeRulePattern(include: "italic"),
                 IncludeRulePattern(include: "mono"),
-                IncludeRulePattern(include: "test")
+                IncludeRulePattern(include: "test"),
+                BeginEndRule(name: "markup.center", begin: "^\\`center$", end: "^\\`$", patterns: [])
             ],
             repository: Repository(patterns: [
                 "todo": MatchRule(name: "comment.keyword.todo", match: "TODO"),

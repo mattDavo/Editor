@@ -9,6 +9,7 @@ import Foundation
 
 public protocol ThemeAttribute {
     
+    /// Unique key for this type of attribute
     var key: String { get }
     
     func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange)

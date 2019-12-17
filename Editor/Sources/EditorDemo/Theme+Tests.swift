@@ -7,6 +7,7 @@
 
 import Foundation
 import EditorCore
+import EditorUI
 
 extension Theme {
     
