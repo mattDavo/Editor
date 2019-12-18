@@ -145,6 +145,7 @@ To best understand how textmate grammars work and the parsers are implemented, l
 ### Recommended Reading for `EditorUI`
 TextKit and in particular, subclassing the various TextKit models can be difficult and confusing at times, here are some good links to look over if you're trying to digest something in the codebase or why certain behaviour is the way it is.
 - [Performing syntax highlighting](https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/) - In particular the comment section!
+- [Implementing code completion](https://stackoverflow.com/a/16754457)
 
 ## License
 Available under the [MIT License](https://github.com/mattDavo/Editor/blob/master/LICENSE)
