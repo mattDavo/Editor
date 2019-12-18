@@ -19,7 +19,7 @@ We recommend reading the [full documentation](https://github.com/mattDavo/Editor
 
 ![EditorReadMeExampleGif](https://github.com/mattDavo/Editor/blob/master/Images/EditorReadMeExample.gif)
 
-This is all possible with the follow snippets of code.
+This is all possible with the following snippets of code.
 
 First you will create a grammar. This is the definition of your language:
 
