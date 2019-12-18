@@ -1,35 +1,122 @@
 # Editor
 
-A language grammar tokenizer and themer, with an integrated editor.
+Custom language grammar tokenizer and theming/syntax highlighter with integrated editor written in Swift, designed for use in both macOS and iOS.
 
+Based on the <a href="https://macromates.com/manual/en/language_grammars">Textmate Grammar</a> language and <a href="https://github.com/microsoft/vscode-textmate">vscode's implementation</a>. Contains a subset of the textmate grammar features with it's own extensions.
 
+Goal: To create an flexible advanced text editor framework so that any app that needs to create an editor with non-trivial features, small or little, can add them easily.
 
-## Grammar
+## Installation
+Currently Editor is only available through the Swift Package Manager tooling and yet to have a major release. So add the following to your `Package.swift` file:
+```
+.package(url: "https://github.com/mattDavo/Editor", .branch("master"))
+```
 
-### Capture groups
-#### MatchRule
-You can define capture groups in your MatchRules like so:
+## Example Usage
+Head over to [EditorExample](https://github.com/mattDavo/EditorExample) to see Editor used in a larger project example.
+
+We recommend reading the [full documentation](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) to best understand how to create your best editor. However, here is a quick example of what you can use editor to do:
+
+![EditorReadMeExampleGif](https://github.com/mattDavo/Editor/blob/Images/EditorReadMeExample.gif)
+
+First you will create a grammar. This is the definition of your language:
+
 ```Swift
-MatchRule(name: "example", match: "\\+((Hello) (world))\\+", captures: [
-    Capture(),
-    Capture(name: "Hello world"),
-    Capture(name: "Hello"),
-    Capture(name: "world")
+import EditorCore
+
+let readMeExampleGrammar = Grammar(
+    scopeName: "source.example",
+    fileTypes: [],
+    patterns: [
+        MatchRule(name: "keyword.special.class", match: "\\bclass\\b"),
+        MatchRule(name: "keyword.special.let", match: "\\blet\\b"),
+        MatchRule(name: "keyword.special.var", match: "\\bvar\\b"),
+        BeginEndRule(
+            name: "string.quoted.double",
+            begin: "\"",
+            end: "\"",
+            patterns: [
+                MatchRule(name: "source.example", match: #"\\\(.*\)"#, captures: [
+                    Capture(patterns: [IncludeGrammarPattern()])
+                ])
+            ]
+        ),
+        BeginEndRule(name: "comment.line.double-slash", begin: "//", end: "\\n", patterns: [IncludeRulePattern(include: "todo")]),
+        BeginEndRule(name: "comment.block", begin: "/\\*", end: "\\*/", patterns: [IncludeRulePattern(include: "todo")])
+    ],
+    repository: Repository(patterns: [
+        "todo": MatchRule(name: "comment.keyword.todo", match: "TODO")
+    ])
+)
+```
+
+Next you will create a Theme. This is how the scopes of your tokens (text divided based on the grammar) are formatted:
+
+```Swift
+import EditorCore
+import EditorUI
+
+let readMeExampleTheme = Theme(name: "basic", settings: [
+    ThemeSetting(scope: "comment", parentScopes: [], attributes: [
+        ColorThemeAttribute(color: .systemGreen)
+    ]),
+    ThemeSetting(scope: "keyword", parentScopes: [], attributes: [
+        ColorThemeAttribute(color: .systemBlue)
+    ]),
+    ThemeSetting(scope: "string", parentScopes: [], attributes: [
+        ColorThemeAttribute(color: .systemRed)
+    ]),
+    ThemeSetting(scope: "source", parentScopes: [], attributes: [
+        ColorThemeAttribute(color: .textColor),
+        FontThemeAttribute(font: .monospacedSystemFont(ofSize: 18)),
+        TailIndentThemeAttribute(value: -30)
+    ]),
+    ThemeSetting(scope: "comment.keyword", parentScopes: [], attributes: [
+        ColorThemeAttribute(color: .systemTeal)
+    ])
 ])
 ```
-Captures can have name, patterns or both. Nested capture groups work such that the above "Hello world" capture is applied, then the "Hello", and finally "world". Any scopes added from parent captures will be cascaded onto the nested captures. For example, using the above rule on the following text:
 
-`+Hello world+`
+Finally we will take our `NSTextView` and give it to our `Editor` with the grammar and theme.
+```Swift
+import Cocoa
+import EditorUI
 
-Will produce:
+class ViewController: NSViewController {
+
+    @IBOutlet var textView: EditorTextView!
+    var editor: Editor!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        textView.insertionPointColor = .systemBlue
+        textView.replace(lineNumberGutter: LineNumberGutter(withTextView: textView))
+        
+        editor = Editor(textView: textView, grammar: readMeExampleGrammar, theme: readMeExampleTheme)
+    }
+}
 ```
-Tokenizing line: +Hello world+
 
- - Token from 0 to 1 '+' with scopes: [source.test.05, test, ]
- - Token from 1 to 6 'Hello' with scopes: [source.test.05, test, , Hello world, Hello]
- - Token from 6 to 7 ' ' with scopes: [source.test.05, test, , Hello world]
- - Token from 7 to 12 'world' with scopes: [source.test.05, test, , Hello world, world]
- - Token from 12 to 13 '+' with scopes: [source.test.05, test, ]
- - Token from 13 to 14 '
-' with scopes: [source.test.05]
-```
+And wallah! With the appropriate settings in the interface builder this will produce the nice editor above.
+
+Be sure to read the [Documentation](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) to understand what the above code is doing so that you can create your own editors!
+
+
+
+## Contributing
+
+### Recommended Reading
+
+To best understand how textmate grammars work and the parsers are implemented, look over the following:
+- [Textmate language grammars](https://macromates.com/manual/en/language_grammars)
+- [Textmate scope selectors](https://macromates.com/manual/en/scope_selectors]=)
+- [Writing a textmate grammar](https://www.apeth.com/nonblog/stories/textmatebundle.html)
+- [VSCode implementation](https://github.com/microsoft/vscode-textmate)
+- [VSCode syntax highlighting optimizations](https://code.visualstudio.com/blogs/2017/02/08/syntax-highlighting-optimizations)
+- [Iro syntax highligher](https://medium.com/@model_train/creating-universal-syntax-highlighters-with-iro-549501698fd2)
+- [Sublime text syntax highlighter - very high performance](https://github.com/trishume/syntect)
+
+
+## License
+Available under the [MIT License](https://github.com/mattDavo/Editor/blob/master/LICENSE)

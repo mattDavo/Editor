@@ -13,22 +13,22 @@ import Foundation
 public class Grammar {
     
     /// The root scope of this grammar.
-    var scopeName: String
+    public var scopeName: String
     
     /// The file types this grammar should be used for.
-    var fileTypes: [String]
+    public var fileTypes: [String]
     
     /// The root level patterns for this grammar.
-    var patterns: [Pattern]
+    public var patterns: [Pattern]
     
     /// The folding start marker
-    var foldingStartMarker: String?
+    public var foldingStartMarker: String?
     
     /// The folding end marker
-    var foldingStopMarker: String?
+    public var foldingStopMarker: String?
     
     /// This grammar's repository of patterns
-    var repository: Repository?
+    public var repository: Repository?
     
     private var _rules: [Rule]?
     
@@ -70,6 +70,13 @@ public class Grammar {
             scope.attributes = theme.attributes(forScope: scope.name)
         }
         return LineState(scopes: [scope])
+    }
+    
+    public func baseAttributes(forTheme theme: Theme) -> [NSAttributedString.Key: Any] {
+        return theme.attributes(forScope: scopeName).reduce(NSMutableAttributedString(string: "a"), {
+        $1.apply(to: $0, withRange: NSRange(location: 0, length: 1))
+        return $0
+        }).attributes(at: 0, effectiveRange: nil)
     }
     
     public func tokenize(lines: [String], withTheme theme: Theme? = nil) -> [TokenizedLine] {

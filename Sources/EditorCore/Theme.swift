@@ -83,7 +83,7 @@ public class Theme {
         }
     }
     
-    func attributes(forScope scope: String) -> [ThemeAttribute] {
+    public func attributes(forScope scope: String) -> [ThemeAttribute] {
         var curr = root
         for comp in scope.split(separator: ".") {
             if let child = curr.children[String(comp)] {

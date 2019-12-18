@@ -36,6 +36,7 @@ public class Editor: NSObject {
         textView.delegate = self
         textView.replace(grammar: grammar, theme: theme)
         textView.textContainerInset = NSSize(width: 20, height: 20)
+        didHighlightSyntax(textView: textView)
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)
     }
@@ -49,10 +50,8 @@ public class Editor: NSObject {
             return
         }
         
-        // Set the type attributes to that of the last character. This is important only for the line height of the empty final line in the document.
-        if storage.length > 0 {
-            textView.typingAttributes = storage.attributes(at: storage.length-1, effectiveRange: nil)
-        }
+        // Set the type attributes to base scope. This is important for the line height of the empty final line in the document and the look of an initially empty document.
+        textView.typingAttributes = grammar.baseAttributes(forTheme: theme)
         
         // Layout the view for the invalidated range.
         if let rect = textView.boundingRect(forCharacterRange: storage.lastInvalidatedRange) {
@@ -64,7 +63,7 @@ public class Editor: NSObject {
         
         // Check EOF
         let prev = textView.selectedRanges
-        if storage.string.isEmpty || storage.string.last != "\n" {
+        if !storage.string.isEmpty && storage.string.last != "\n" {
             storage.append(NSAttributedString(string: "\n"))
         }
         textView.selectedRanges = prev

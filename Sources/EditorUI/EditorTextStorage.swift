@@ -169,6 +169,11 @@ public class EditorTextStorage: NSTextStorage {
     /// - Returns: A tuple containing the edited range and the invalidated range. The edited range is the range of the string that was processed and attributes were applied. The invalidated range is the range of characters that were changed as a result of the edit, e.g. if lines were added or deleted, it will included all of the lines afterwards, so we can re-render the view.
     ///
     func processSyntaxHighlighting(editedRange: NSRange? = nil) -> (NSRange, NSRange) {
+        // Return if empty
+        if string.isEmpty {
+            return (storage.fullRange, storage.fullRange)
+        }
+        
         // Split the string into lines.
         let lines = getLines(string: string)
         
