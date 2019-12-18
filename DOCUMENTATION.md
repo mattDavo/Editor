@@ -190,7 +190,7 @@ Grammar(
 )
 ```
 
-Now obviously for this example, we have more lines of code. However, it is not too hard to see that as the Grammar grows, it will be beneficial by reducing the duplicate pattern definition like in the original. 
+Now obviously for this example, we have more lines of code but we have removed the duplicate concrete pattern (rule) definition. However, it is not too hard to see that as the Grammar grows, it will be beneficial by reducing the duplicate pattern definition like in the original. 
 
 ## `EditorUI`
 
