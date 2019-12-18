@@ -17,7 +17,7 @@ Head over to [EditorExample](https://github.com/mattDavo/EditorExample) to see E
 
 We recommend reading the [full documentation](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) to best understand how to create your best editor. However, here is a quick example of what you can use editor to do:
 
-![EditorReadMeExampleGif](https://github.com/mattDavo/Editor/blob/Images/EditorReadMeExample.gif)
+![EditorReadMeExampleGif](https://github.com/mattDavo/Editor/blob/master/Images/EditorReadMeExample.gif)
 
 First you will create a grammar. This is the definition of your language:
 
