@@ -19,6 +19,8 @@ We recommend reading the [full documentation](https://github.com/mattDavo/Editor
 
 ![EditorReadMeExampleGif](https://github.com/mattDavo/Editor/blob/master/Images/EditorReadMeExample.gif)
 
+This is all possible with the follow snippets of code.
+
 First you will create a grammar. This is the definition of your language:
 
 ```Swift
@@ -98,7 +100,7 @@ class ViewController: NSViewController {
 }
 ```
 
-And wallah! With the appropriate settings in the interface builder this will produce the nice editor above.
+And voilà! With the appropriate settings in the interface builder this will produce the nice editor above.
 
 Be sure to read the [Documentation](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) to understand what the above code is doing so that you can create your own editors!
 
@@ -116,6 +118,7 @@ To best understand how textmate grammars work and the parsers are implemented, l
 - [VSCode syntax highlighting optimizations](https://code.visualstudio.com/blogs/2017/02/08/syntax-highlighting-optimizations)
 - [Iro syntax highligher](https://medium.com/@model_train/creating-universal-syntax-highlighters-with-iro-549501698fd2)
 - [Sublime text syntax highlighter - very high performance](https://github.com/trishume/syntect)
+- [Editor Documentation!](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) 😜
 
 
 ## License
