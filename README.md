@@ -79,7 +79,7 @@ let readMeExampleTheme = Theme(name: "basic", settings: [
 ])
 ```
 
-Finally we will take our `NSTextView` and give it to our `Editor` with the grammar and theme.
+Finally we will take our `NSTextView` subclass `EditorTextView` and give it to our `Editor` with the grammar and theme.
 ```Swift
 import Cocoa
 import EditorUI
