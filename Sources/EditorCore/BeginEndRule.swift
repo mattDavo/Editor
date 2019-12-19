@@ -20,12 +20,12 @@ public class BeginEndRule: Rule, Pattern {
     /// The begin regex for the rule.
     ///
     /// Ensure special characters are escaped correctly.
-    var begin: String
+    var begin: NSRegularExpression
     
     /// The end regex for the rule.
     ///
     /// Ensure special characters are escaped correctly.
-    var end: String
+    var end: NSRegularExpression
     
     /// The patterns to apply within the begin and end patterns.
     var patterns: [Pattern]
@@ -44,15 +44,20 @@ public class BeginEndRule: Rule, Pattern {
         name: String,
         begin: String,
         end: String,
-        patterns: [Pattern],
         contentName: String? = nil,
+        patterns: [Pattern],
         beginCaptures: [String] = [],
         endCaptures: [String] = []
     ) {
         self.id = UUID()
         self.name = name
-        self.begin = begin
-        self.end = end
+        do {
+            self.begin = try NSRegularExpression(pattern: begin, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
+            self.end = try NSRegularExpression(pattern: end, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
+        }
+        catch {
+            fatalError("Could not create regex for BeginEndRule with name '\(name)' due to error: "error.localizedDescription)
+        }
         self.patterns = patterns
         self.contentName = contentName
         self.beginCaptures = beginCaptures

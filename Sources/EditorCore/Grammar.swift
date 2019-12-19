@@ -101,8 +101,19 @@ public class Grammar {
             // Before we apply the rules in the current scope, see if we are in a BeginEndRule and reached the end of its scope.
             if let endPattern = state.currentScope?.end {
                 if let newPos = matches(pattern: endPattern, str: line, at: loc) {
-                    state.scopes.removeLast()
-                    tokenizedLine.increaseLastTokenLength(by: newPos - loc)
+                    // Pop off state.
+                    let last = state.scopes.removeLast()
+                    // If the state is a content state, pop off the next as well.
+                    if last.isContentScope {
+                        // Create a new token for the end match of the BeginEndRule
+                        tokenizedLine.addToken(Token(range: NSRange(location: loc, length: newPos - loc), scopes: state.scopes))
+                        state.scopes.removeLast()
+                    }
+                    else {
+                        // Extend the length of current token to include the end match of the BeginEndRule
+                        tokenizedLine.increaseLastTokenLength(by: newPos - loc)
+                    }
+                    // Update the location and start a new token.
                     loc = newPos
                     tokenizedLine.addToken(Token(range: NSRange(location: loc, length:0), scopes: state.scopes))
                     continue
@@ -233,13 +244,33 @@ public class Grammar {
                 // Apply the begin end rule
                 else if let rule = rule as? BeginEndRule {
                     if let newPos = matches(pattern: rule.begin, str: line, at: loc) {
+                        // Set matched flag
                         matched = true
+                        // Create a new scope for the BeginEndRule and add it to the state.
                         var scope = Scope(name: rule.name, rules: rule.resolveRules(grammar: self), end: rule.end)
                         if let theme = theme {
                             scope.attributes = theme.attributes(forScope: scope.name)
                         }
                         state.scopes.append(scope)
+                        
+                        // Add a new token for the begin match of the BeginEndRule
                         tokenizedLine.addToken(Token(range: NSRange(location: loc, length: newPos - loc), scopes: state.scopes))
+                        
+                        // If the BeginEndRule has a content name:
+                        if let contentName = rule.contentName {
+                            // Create an additional scope, with the same rules, and end pattern.
+                            var contentScope = Scope(name: contentName, rules: rule.resolveRules(grammar: self), end: rule.end)
+                            if let theme = theme {
+                                contentScope.attributes = theme.attributes(forScope: contentName)
+                            }
+                            // Set the isContentScope flag so we know what to do when we find the end match
+                            contentScope.isContentScope = true
+                            // Add this scope to the state as well
+                            state.scopes.append(contentScope)
+                            // Start a new token for the content between the begin and end matches.
+                            tokenizedLine.addToken(Token(range: NSRange(location: newPos, length: 0), scopes: state.scopes))
+                        }
+                        // Update the location.
                         loc = newPos
                         break
                     }
@@ -265,51 +296,33 @@ public class Grammar {
         return tokenizedLine
     }
     
-    func matches(pattern: String, str: String, at loc: Int) -> Int? {
+    // Must be anchored to the start of the range and enforce word and line boundaries
+    static let matchingOptions = NSRegularExpression.MatchingOptions(arrayLiteral: .anchored, .withTransparentBounds, .withoutAnchoringBounds)
+    
+    func matches(pattern: NSRegularExpression, str: String, at loc: Int) -> Int? {
         let range = NSRange(location: loc, length: str.utf16.count - loc)
-        do {
-            let exp = try NSRegularExpression(pattern: pattern, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
-            
-            // Must be anchored to the start of the range and enforce word and line boundaries
-            let options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds).union(.withoutAnchoringBounds)
-            
-            if let match = exp.firstMatch(in: str, options: options, range: range) {
-                return match.range.upperBound
-            }
-            else {
-                return nil
-            }
+        
+        let matchRange = pattern.rangeOfFirstMatch(in: str, options: Self.matchingOptions, range: range)
+        if matchRange.location != NSNotFound {
+            return matchRange.upperBound
         }
-        catch {
-            print(error)
-            print("pattern: \(pattern), str: \(str), loc: \(loc)")
+        else {
             return nil
         }
     }
     
-    func captures(pattern: String, str: String, at loc: Int) -> [(String, NSRange)] {
+    func captures(pattern: NSRegularExpression, str: String, at loc: Int) -> [(String, NSRange)] {
         let range = NSRange(location: loc, length: str.utf16.count - loc)
-        do {
-            let exp = try NSRegularExpression(pattern: pattern, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
-            
-            // Must be anchored to the start of the range and enforce word and line boundaries
-            let options = NSRegularExpression.MatchingOptions.anchored.union(.withTransparentBounds).union(.withoutAnchoringBounds)
-            
-            if let match = exp.firstMatch(in: str, options: options, range: range) {
-                return (0..<match.numberOfRanges).map { i -> (String, NSRange) in
-                    let captureRange = match.range(at: i)
-                    let startIndex = str.index(str.startIndex, offsetBy: captureRange.location)
-                    let endIndex = str.index(str.startIndex, offsetBy: captureRange.upperBound)
-                    return (String(str[startIndex..<endIndex]), match.range(at: i))
-                }
-            }
-            else {
-                return []
+        
+        if let match = pattern.firstMatch(in: str, options: Self.matchingOptions, range: range) {
+            return (0..<match.numberOfRanges).map { i -> (String, NSRange) in
+                let captureRange = match.range(at: i)
+                let startIndex = str.index(str.startIndex, offsetBy: captureRange.location)
+                let endIndex = str.index(str.startIndex, offsetBy: captureRange.upperBound)
+                return (String(str[startIndex..<endIndex]), match.range(at: i))
             }
         }
-        catch {
-            print(error)
-            print("pattern: \(pattern), str: \(str), loc: \(loc)")
+        else {
             return []
         }
     }

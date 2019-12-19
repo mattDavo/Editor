@@ -10,7 +10,8 @@ import Foundation
 struct Scope {
     var name: String
     var rules: [Rule]
-    var end: String?
+    var end: NSRegularExpression?
+    var isContentScope = false
     var attributes: [ThemeAttribute] = []
 }
 
