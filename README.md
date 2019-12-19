@@ -111,19 +111,21 @@ Be sure to read the [Documentation](https://github.com/mattDavo/Editor/blob/mast
 Contributions are welcomed and encouraged. Feel free to raise pull requests, raise issues for bugs or new features, write tests or [contact me](mailto:mattdavo15@gmail.com) if you think you can help.
 
 ### TODO
-EditorCore
+##### EditorCore
 - [ ] Captures for `BeginEndRule`
 - [ ] Folding stop and start markers
 - [ ] `IncludeLanguagePattern`
 - [ ] Parent scopes for `ThemeSetting`s
 - [ ] Refactor `Rule` matching into the `protocol`
 
-EditorUI
+
+##### EditorUI
 - [ ] Clickable/tappable tokens with handlers
 - [ ] Token replacements, take a token and replace the text.
 - [ ] State-conditional formatting: based on the position of the cursor
 
-All
+
+##### All
 - [ ] Subscribe to tokens, changes
 - [ ] Auto-completion and suggestions
 
@@ -143,6 +145,7 @@ To best understand how textmate grammars work and the parsers are implemented, l
 ### Recommended Reading for `EditorUI`
 TextKit and in particular, subclassing the various TextKit models can be difficult and confusing at times, here are some good links to look over if you're trying to digest something in the codebase or why certain behaviour is the way it is.
 - [Performing syntax highlighting](https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/) - In particular the comment section!
+- [Implementing code completion](https://stackoverflow.com/a/16754457)
 
 ## License
 Available under the [MIT License](https://github.com/mattDavo/Editor/blob/master/LICENSE)
