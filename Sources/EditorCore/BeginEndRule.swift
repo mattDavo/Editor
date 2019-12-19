@@ -56,7 +56,7 @@ public class BeginEndRule: Rule, Pattern {
             self.end = try NSRegularExpression(pattern: end, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
         }
         catch {
-            fatalError("Could not create regex for BeginEndRule with name '\(name)' due to error: "error.localizedDescription)
+            fatalError("Could not create regex for BeginEndRule with name '\(name)' due to error: \(error.localizedDescription)")
         }
         self.patterns = patterns
         self.contentName = contentName
