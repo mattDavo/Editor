@@ -62,11 +62,11 @@ public class Editor: NSObject {
         }
         
         // Check EOF
-        let prev = textView.selectedRanges
         if !storage.string.isEmpty && storage.string.last != "\n" {
+            let prev = textView.selectedRanges
             storage.append(NSAttributedString(string: "\n"))
+            textView.selectedRanges = prev
         }
-        textView.selectedRanges = prev
     }
 }
 
