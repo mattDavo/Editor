@@ -236,7 +236,12 @@ public class EditorTextStorage: NSTextStorage {
             return $0
         })
         
-        storage.replaceCharacters(in: NSRange(location: startOfProcessing, length: total.length), with: total)
+        total.enumerateAttributes(in: total.fullRange, using: {
+            (attrs, range, stop) in
+            storage.setAttributes(attrs, range: NSRange(location: startOfProcessing + range.location, length: range.length))
+        })
+        
+        
         // Important for fixing fonts where the font does not contain the glyph in the text, e.g. emojis.
         fixAttributes(in: NSRange(location: startOfProcessing, length: total.length))
         

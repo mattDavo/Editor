@@ -36,6 +36,8 @@ public class Editor: NSObject {
         textView.delegate = self
         textView.replace(grammar: grammar, theme: theme)
         textView.textContainerInset = NSSize(width: 20, height: 20)
+        // Set the type attributes to base scope. This is important for the line height of the empty final line in the document and the look of an initially empty document.
+        textView.typingAttributes = grammar.baseAttributes(forTheme: theme)
         didHighlightSyntax(textView: textView)
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)
@@ -46,19 +48,25 @@ public class Editor: NSObject {
     }
     
     private func didHighlightSyntax(textView: EditorTextView) {
-        guard let storage = textView.textStorage as? EditorTextStorage else {
+        guard let storage = textView.textStorage as? EditorTextStorage,
+            let layoutManager = textView.layoutManager,
+            let textContainer = textView.textContainer else {
             return
         }
         
-        // Set the type attributes to base scope. This is important for the line height of the empty final line in the document and the look of an initially empty document.
-        textView.typingAttributes = grammar.baseAttributes(forTheme: theme)
-        
-        // Layout the view for the invalidated range.
-        if let rect = textView.boundingRect(forCharacterRange: storage.lastInvalidatedRange) {
-            textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
-        }
-        else {
-            textView.needsDisplay = true
+        // Layout the view for the invalidated visible range.
+        // Get the visible range
+        let visibleRange = layoutManager.glyphRange(forBoundingRect: textView.visibleRect, in: textContainer)
+        // Get the intersection of the invalidated range and visible range.
+        // If there is no intersection, no display needed.
+        if let visibleInvalid = visibleRange.intersection(storage.lastInvalidatedRange) {
+            // Try to get the bounding rect of the invalid range and only re-render it, otherwise re-render the entire text view.
+            if let rect = textView.boundingRect(forCharacterRange: visibleInvalid) {
+                textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
+            }
+            else {
+                textView.needsDisplay = true
+            }
         }
         
         // Check EOF
