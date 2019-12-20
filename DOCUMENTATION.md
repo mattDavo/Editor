@@ -79,6 +79,8 @@ let swiftString = BeginEndRule(
     ]
 )
 ```
+BeginEndRules also have a `contentName` optional argument, which if provided will apply an additional scope to only the text matched between the begin and end regex matches.
+
 Note the sub-patterns to look for string interpolation and it's captures to recursively include the grammar. But what is a `Capture`? We'll look at that next.
 
 
