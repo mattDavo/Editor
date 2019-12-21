@@ -12,5 +12,5 @@ public protocol ThemeAttribute {
     /// Unique key for this type of attribute
     var key: String { get }
     
-    func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange)
+    func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange)
 }

@@ -17,7 +17,7 @@ public struct ColorThemeAttribute: ThemeAttribute {
         self.color = color
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        attrStr.addAttribute(.foregroundColor, value: color, range: range)
+    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
+        attrStr.addAttribute(.foregroundColor, value: color, range: tokenRange)
     }
 }

@@ -224,30 +224,21 @@ public class EditorTextStorage: NSTextStorage {
             processingLine += 1
         }
         
-        let processedLinesRange = processingLines.first..<processingLines.last+1
-        let processedLines = Array(lines[processedLinesRange])
-        
-        let linesProcessed = grammar.theme(lines: processedLines, tokenizedLines: tokenizedLines, withTheme: theme)
-        
         let startOfProcessing = lines[0..<processingLines.first].reduce(0, {$0 + $1.utf16.count})
         
-        let total = linesProcessed.reduce(NSMutableAttributedString(), {
-            $0.append($1)
-            return $0
-        })
+        var lineLoc = startOfProcessing
+        tokenizedLines.forEach {
+            $0.applyTheme(storage, at: lineLoc)
+            lineLoc += $0.length
+        }
         
-        total.enumerateAttributes(in: total.fullRange, using: {
-            (attrs, range, stop) in
-            storage.setAttributes(attrs, range: NSRange(location: startOfProcessing + range.location, length: range.length))
-        })
-        
+        let processedRange = NSRange(location: startOfProcessing, length: lineLoc - startOfProcessing)
         
         // Important for fixing fonts where the font does not contain the glyph in the text, e.g. emojis.
-        fixAttributes(in: NSRange(location: startOfProcessing, length: total.length))
+        fixAttributes(in: processedRange)
         
-        print("Lines processed: \(processingLines.first) to \(processingLines.first+processedLines.count-1)")
+        print("Lines processed: \(processingLines.first) to \(processingLines.last)")
         
-        let processedRange = NSRange(location: startOfProcessing, length: total.length)
         let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
         
         return (processedRange, invalidatedRange)

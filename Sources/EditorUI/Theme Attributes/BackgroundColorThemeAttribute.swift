@@ -19,10 +19,10 @@ public struct BackgroundColorThemeAttribute: ThemeAttribute {
         self.rounded = rounded
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        attrStr.addAttribute(.backgroundColor, value: color, range: range)
+    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
+        attrStr.addAttribute(.backgroundColor, value: color, range: tokenRange)
         if rounded {
-            attrStr.addAttribute(NSAttributedString.Key("isBackgroundColorRounded"), value: true, range: range)
+            attrStr.addAttribute(NSAttributedString.Key("isBackgroundColorRounded"), value: true, range: tokenRange)
         }
     }
 }

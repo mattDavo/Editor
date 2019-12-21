@@ -17,7 +17,7 @@ public struct FontThemeAttribute: ThemeAttribute {
         self.font = font
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        attrStr.addAttribute(.font, value: font, range: range)
+    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
+        attrStr.addAttribute(.font, value: font, range: tokenRange)
     }
 }

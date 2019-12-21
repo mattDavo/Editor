@@ -56,14 +56,6 @@ public class Grammar {
         self.repository = repository
     }
     
-    public func theme(lines: [String], withTheme theme: Theme) -> [NSAttributedString] {
-        return zip(tokenize(lines: lines, withTheme: theme), lines).map{$0.0.getThemedLine(line: $0.1)}
-    }
-    
-    public func theme(lines: [String], tokenizedLines: [TokenizedLine], withTheme theme: Theme) -> [NSAttributedString] {
-        return zip(tokenizedLines, lines).map{$0.0.getThemedLine(line: $0.1)}
-    }
-    
     public func createFirstLineState(theme: Theme? = nil) -> LineState {
         var scope = Scope(name: scopeName, rules: rules, end: nil)
         if let theme = theme {
@@ -74,7 +66,7 @@ public class Grammar {
     
     public func baseAttributes(forTheme theme: Theme) -> [NSAttributedString.Key: Any] {
         return theme.attributes(forScope: scopeName).reduce(NSMutableAttributedString(string: "a"), {
-        $1.apply(to: $0, withRange: NSRange(location: 0, length: 1))
+            $1.apply(to: $0, withLineRange: NSRange(location: 0, length: 1), tokenRange: NSRange(location: 0, length: 1))
         return $0
         }).attributes(at: 0, effectiveRange: nil)
     }

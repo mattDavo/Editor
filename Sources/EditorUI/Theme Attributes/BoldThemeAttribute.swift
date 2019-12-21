@@ -16,7 +16,7 @@ public struct BoldThemeAttribute: ThemeAttribute {
     
     public init() {}
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
         
     }
     
@@ -30,13 +30,13 @@ public struct BoldThemeAttribute: ThemeAttribute {
     
     public init() {}
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        let font = attrStr.attributes(at: range.location, effectiveRange: nil)[.font] as? NSFont ?? NSFont()
+    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
+        let font = attrStr.attributes(at: tokenRange.location, effectiveRange: nil)[.font] as? NSFont ?? NSFont()
         let traits = font.fontDescriptor.symbolicTraits.union(.bold)
         let desc = font.fontDescriptor.withSymbolicTraits(traits)
         
         if let newFont = NSFont(descriptor: desc, size: font.pointSize) {
-            attrStr.addAttribute(.font, value: newFont, range: range)
+            attrStr.addAttribute(.font, value: newFont, range: tokenRange)
         }
         else {
             print("Warning: Failed to apply \(key) theme attribute to \(attrStr)")

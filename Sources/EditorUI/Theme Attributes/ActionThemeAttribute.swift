@@ -19,9 +19,9 @@ public struct ActionThemeAttribute: ThemeAttribute {
         self.underlineColor = underlineColor
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        attrStr.addAttribute(.link, value: "", range: range)
-        attrStr.addAttribute(NSAttributedString.Key(rawValue: "linkId"), value: linkId, range: range)
-        attrStr.addAttribute(.underlineColor, value: underlineColor, range: range)
+    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
+        attrStr.addAttribute(.link, value: "", range: tokenRange)
+        attrStr.addAttribute(NSAttributedString.Key(rawValue: "linkId"), value: linkId, range: tokenRange)
+        attrStr.addAttribute(.underlineColor, value: underlineColor, range: tokenRange)
     }
 }
