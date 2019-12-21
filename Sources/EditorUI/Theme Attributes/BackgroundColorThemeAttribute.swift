@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct BackgroundColorThemeAttribute: ThemeAttribute {
+public struct BackgroundColorThemeAttribute: TokenThemeAttribute {
     
     public var key = "background-color"
     public var color: Color
@@ -19,10 +19,10 @@ public struct BackgroundColorThemeAttribute: ThemeAttribute {
         self.rounded = rounded
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
-        attrStr.addAttribute(.backgroundColor, value: color, range: tokenRange)
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+        attrStr.addAttribute(.backgroundColor, value: color, range: range)
         if rounded {
-            attrStr.addAttribute(NSAttributedString.Key("isBackgroundColorRounded"), value: true, range: tokenRange)
+            attrStr.addAttribute(NSAttributedString.Key("isBackgroundColorRounded"), value: true, range: range)
         }
     }
 }

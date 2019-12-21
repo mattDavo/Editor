@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct ColorThemeAttribute: ThemeAttribute {
+public struct ColorThemeAttribute: TokenThemeAttribute {
     
     public let key = "color"
     public let color: Color
@@ -17,7 +17,7 @@ public struct ColorThemeAttribute: ThemeAttribute {
         self.color = color
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
-        attrStr.addAttribute(.foregroundColor, value: color, range: tokenRange)
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+        attrStr.addAttribute(.foregroundColor, value: color, range: range)
     }
 }

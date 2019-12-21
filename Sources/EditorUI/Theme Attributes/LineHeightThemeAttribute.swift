@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct LineHeightThemeAttribute: ThemeAttribute {
+public struct LineHeightThemeAttribute: LineThemeAttribute {
     
     public let key = "line-height"
     public let min: CGFloat
@@ -25,14 +25,8 @@ public struct LineHeightThemeAttribute: ThemeAttribute {
         self.max = max
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
-        let attr = attrStr.attributes(at: lineRange.location, effectiveRange: nil)[.paragraphStyle] as? NSParagraphStyle ?? NSParagraphStyle()
-        guard let style = attr.mutableCopy() as? NSMutableParagraphStyle else {
-            error("Couldn't create mutable copy of NSParagraphStyle.")
-            return
-        }
+    public func apply(to style: MutableParagraphStyle) {
         style.minimumLineHeight = min
         style.maximumLineHeight = max
-        attrStr.addAttribute(.paragraphStyle, value: style, range: lineRange)
     }
 }

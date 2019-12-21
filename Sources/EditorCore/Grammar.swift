@@ -65,10 +65,12 @@ public class Grammar {
     }
     
     public func baseAttributes(forTheme theme: Theme) -> [NSAttributedString.Key: Any] {
-        return theme.attributes(forScope: scopeName).reduce(NSMutableAttributedString(string: "a"), {
-            $1.apply(to: $0, withLineRange: NSRange(location: 0, length: 1), tokenRange: NSRange(location: 0, length: 1))
-        return $0
-        }).attributes(at: 0, effectiveRange: nil)
+        let line = TokenizedLine(tokens: [
+            Token(range: NSRange(location: 0, length: 1), scopes: [Scope(name: scopeName, rules: [], attributes: theme.attributes(forScope: scopeName))])
+        ], state: LineState(scopes: []))
+        let str = NSMutableAttributedString(string: "a")
+        line.applyTheme(str, at: 0)
+        return str.attributes(at: 0, effectiveRange: nil)
     }
     
     public func tokenize(lines: [String], withTheme theme: Theme? = nil) -> [TokenizedLine] {

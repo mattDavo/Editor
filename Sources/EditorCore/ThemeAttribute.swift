@@ -7,10 +7,11 @@
 
 import Foundation
 
+/// Base theme attribute protocol
+///
+/// - Important: Do not just conform to `ThemeAttribute`, instead conform to either `TokenThemeAttribute` or `LineThemeAttribute`. Only then will the attribute be applied.
 public protocol ThemeAttribute {
     
     /// Unique key for this type of attribute
     var key: String { get }
-    
-    func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange)
 }

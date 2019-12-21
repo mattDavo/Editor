@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct FontThemeAttribute: ThemeAttribute {
+public struct FontThemeAttribute: TokenThemeAttribute {
     
     public let key = "font-style"
     public let font: Font
@@ -17,7 +17,7 @@ public struct FontThemeAttribute: ThemeAttribute {
         self.font = font
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
-        attrStr.addAttribute(.font, value: font, range: tokenRange)
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+        attrStr.addAttribute(.font, value: font, range: range)
     }
 }

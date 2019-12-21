@@ -40,12 +40,21 @@ public struct TokenizedLine {
     }
     
     public func applyTheme(_ attributedString: NSMutableAttributedString, at loc: Int) {
+        let style = MutableParagraphStyle()
+        
         for token in tokens {
             for scope in token.scopes {
                 for attr in scope.attributes {
-                    attr.apply(to: attributedString, withLineRange: NSRange(location: loc, length: length), tokenRange: NSRange(location: loc + token.range.location, length: token.range.length))
+                    if let lineAttr = attr as? LineThemeAttribute {
+                        lineAttr.apply(to: style)
+                    }
+                    else if let tokenAttr = attr as? TokenThemeAttribute {
+                        tokenAttr.apply(to: attributedString, withRange: NSRange(location: loc + token.range.location, length: token.range.length))
+                    }
                 }
             }
         }
+        
+        attributedString.addAttribute(.paragraphStyle, value: style, range: NSRange(location: loc, length: length))
     }
 }

@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct FirstLineHeadIndentThemeAttribute: ThemeAttribute {
+public struct FirstLineHeadIndentThemeAttribute: LineThemeAttribute {
     
     public let key = "first-line-head-indent"
     public let value: CGFloat
@@ -23,13 +23,7 @@ public struct FirstLineHeadIndentThemeAttribute: ThemeAttribute {
         self.value = value
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
-        let attr = attrStr.attributes(at: lineRange.location, effectiveRange: nil)[.paragraphStyle] as? NSParagraphStyle ?? NSParagraphStyle()
-        guard let style = attr.mutableCopy() as? NSMutableParagraphStyle else {
-            error("Couldn't create mutable copy of NSParagraphStyle.")
-            return
-        }
+    public func apply(to style: MutableParagraphStyle) {
         style.firstLineHeadIndent = value
-        attrStr.addAttribute(.paragraphStyle, value: style, range: lineRange)
     }
 }

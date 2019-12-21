@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct ParagraphSpacingAfterThemeAttribute: ThemeAttribute {
+public struct ParagraphSpacingAfterThemeAttribute: LineThemeAttribute {
     
     public let key = "para-spacing-after"
     public let spacing: CGFloat
@@ -23,13 +23,7 @@ public struct ParagraphSpacingAfterThemeAttribute: ThemeAttribute {
         self.spacing = spacing
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
-        let attr = attrStr.attributes(at: lineRange.location, effectiveRange: nil)[.paragraphStyle] as? NSParagraphStyle ?? NSParagraphStyle()
-        guard let style = attr.mutableCopy() as? NSMutableParagraphStyle else {
-            error("Couldn't create mutable copy of NSParagraphStyle.")
-            return
-        }
+    public func apply(to style: MutableParagraphStyle) {
         style.paragraphSpacing = spacing
-        attrStr.addAttribute(.paragraphStyle, value: style, range: lineRange)
     }
 }
