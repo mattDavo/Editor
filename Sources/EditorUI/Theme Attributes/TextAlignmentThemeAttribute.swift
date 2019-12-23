@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct TextAlignmentThemeAttribute: LineThemeAttribute {
+public class TextAlignmentThemeAttribute: LineThemeAttribute {
     
     public let key = "first-line-head-indent"
     public let value: NSTextAlignment

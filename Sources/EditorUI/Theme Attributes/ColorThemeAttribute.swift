@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct ColorThemeAttribute: TokenThemeAttribute {
+public class ColorThemeAttribute: TokenThemeAttribute {
     
     public let key = "color"
     public let color: Color

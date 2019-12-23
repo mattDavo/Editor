@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct FontThemeAttribute: TokenThemeAttribute {
+public class FontThemeAttribute: TokenThemeAttribute {
     
     public let key = "font-style"
     public let font: Font

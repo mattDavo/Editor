@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct LineHeightThemeAttribute: LineThemeAttribute {
+public class LineHeightThemeAttribute: LineThemeAttribute {
     
     public let key = "line-height"
     public let min: CGFloat

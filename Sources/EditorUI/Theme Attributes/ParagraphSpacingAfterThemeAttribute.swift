@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct ParagraphSpacingAfterThemeAttribute: LineThemeAttribute {
+public class ParagraphSpacingAfterThemeAttribute: LineThemeAttribute {
     
     public let key = "para-spacing-after"
     public let spacing: CGFloat

@@ -56,12 +56,15 @@ public class Grammar {
         self.repository = repository
     }
     
-    public func createFirstLineState(theme: Theme? = nil) -> LineState {
-        var scope = Scope(name: scopeName, rules: rules, end: nil)
-        if let theme = theme {
-            scope.attributes = theme.attributes(forScope: scope.name)
-        }
-        return LineState(scopes: [scope])
+    public func createFirstLineState(theme: Theme = .default) -> LineState {
+        return LineState(scopes: [
+            Scope(
+                name: scopeName,
+                rules: rules,
+                end: nil,
+                attributes: theme.attributes(forScope: scopeName)
+            )
+        ])
     }
     
     public func baseAttributes(forTheme theme: Theme) -> [NSAttributedString.Key: Any] {
@@ -73,7 +76,7 @@ public class Grammar {
         return str.attributes(at: 0, effectiveRange: nil)
     }
     
-    public func tokenize(lines: [String], withTheme theme: Theme? = nil) -> [TokenizedLine] {
+    public func tokenize(lines: [String], withTheme theme: Theme = .default) -> [TokenizedLine] {
         debug("\n\n///////// TOKENIZING WITH GRAMMAR: \(scopeName) /////////")
         var state = createFirstLineState(theme: theme)
         var tokenizedLines = [TokenizedLine]()
@@ -85,10 +88,10 @@ public class Grammar {
         return tokenizedLines
     }
     
-    public func tokenize(line: String, state: LineState, withTheme theme: Theme? = nil) -> TokenizedLine {
+    public func tokenize(line: String, state: LineState, withTheme theme: Theme = .default) -> TokenizedLine {
         debug("Tokenizing line: \(line)")
         var state = state
-        var tokenizedLine = TokenizedLine(tokens: [Token(range: NSRange(location: 0, length: 0), scopes: state.scopes)], state: state)
+        let tokenizedLine = TokenizedLine(tokens: [Token(range: NSRange(location: 0, length: 0), scopes: state.scopes)], state: state)
         
         var loc = 0
         while (loc < line.utf16.count) {
@@ -116,25 +119,21 @@ public class Grammar {
             
             // Get the current scope, to get the rules.
             // There may not always be rules, but there should always be a scope
-            guard let scope = state.currentScope else {
+            guard let currentScope = state.currentScope else {
                 // Shouldn't happen
                 return tokenizedLine
             }
             
             // Apply the rules in order, looking for a match
             var matched = false
-            for rule in scope.rules {
+            for rule in currentScope.rules {
                 // Apply the match rule
                 if let rule = rule as? MatchRule {
                     if let newPos = matches(pattern: rule.match, str: line, at: loc) {
                         // Set matched flag
                         matched = true
                         // Create a new scope
-                        var scope = Scope(name: rule.name, rules: [], attributes: [])
-                        // Add theme attributes if we have a theme
-                        if let theme = theme {
-                            scope.attributes = theme.attributes(forScope: scope.name)
-                        }
+                        let scope = Scope(name: rule.name, rules: [], attributes: theme.attributes(forScope: rule.name))
                         
                         // Create ordered list of tokens
                         // Start with just one token for the entire range of the match.
@@ -150,16 +149,12 @@ public class Grammar {
                             // Get the capture definition from the rule
                             let capture = rule.captures[i]
                             // Create a scope for the capture.
-                            var captureScope = Scope(name: capture.name ?? "", rules: capture.resolveRules(grammar: self))
-                            // Apply the theme to the scope
-                            if let theme = theme {
-                                captureScope.attributes = theme.attributes(forScope: captureScope.name)
-                            }
+                            let captureScope = Scope(name: capture.name ?? "", rules: capture.resolveRules(grammar: self), attributes: theme.attributes(forScope: capture.name ?? ""))
                             // Create the capture state (the current state, with the capture state)
                             let captureState = LineState(scopes: state.scopes + [captureScope])
                             
                             // Use tokenize on the capture as if it was an entire line.
-                            var captureLine = tokenize(line: captureText, state: captureState, withTheme: theme)
+                            let captureLine = tokenize(line: captureText, state: captureState, withTheme: theme)
                             
                             // Adjust the range of tokens to account for the location of the capture.
                             captureLine.tokens = captureLine.tokens.map({
@@ -241,10 +236,7 @@ public class Grammar {
                         // Set matched flag
                         matched = true
                         // Create a new scope for the BeginEndRule and add it to the state.
-                        var scope = Scope(name: rule.name, rules: rule.resolveRules(grammar: self), end: rule.end)
-                        if let theme = theme {
-                            scope.attributes = theme.attributes(forScope: scope.name)
-                        }
+                        let scope = Scope(name: rule.name, rules: rule.resolveRules(grammar: self), end: rule.end, attributes: theme.attributes(forScope: rule.name))
                         state.scopes.append(scope)
                         
                         // Add a new token for the begin match of the BeginEndRule
@@ -252,15 +244,14 @@ public class Grammar {
                         
                         // If the BeginEndRule has a content name:
                         if let contentName = rule.contentName {
-                            // Create an additional scope, with the same rules, and end pattern.
-                            var contentScope = Scope(name: contentName, rules: rule.resolveRules(grammar: self), end: rule.end)
-                            if let theme = theme {
-                                contentScope.attributes = theme.attributes(forScope: contentName)
-                            }
+                            // Add an additional scope, with the same rules and end pattern.
                             // Set the isContentScope flag so we know what to do when we find the end match
-                            contentScope.isContentScope = true
-                            // Add this scope to the state as well
-                            state.scopes.append(contentScope)
+                            state.scopes.append(Scope(
+                                name: contentName, rules: rule.resolveRules(grammar: self),
+                                end: rule.end,
+                                attributes: theme.attributes(forScope: contentName),
+                                isContentScope: true
+                            ))
                             // Start a new token for the content between the begin and end matches.
                             tokenizedLine.addToken(Token(range: NSRange(location: newPos, length: 0), scopes: state.scopes))
                         }

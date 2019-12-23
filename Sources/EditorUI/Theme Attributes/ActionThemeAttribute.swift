@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct ActionThemeAttribute: TokenThemeAttribute {
+public class ActionThemeAttribute: TokenThemeAttribute {
     
     public let key = "action"
     public let linkId: String

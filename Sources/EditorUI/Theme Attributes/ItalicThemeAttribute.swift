@@ -24,7 +24,7 @@ public struct ItalicThemeAttribute: ThemeAttribute {
 #elseif os(macOS)
 import Cocoa
 
-public struct ItalicThemeAttribute: TokenThemeAttribute {
+public class ItalicThemeAttribute: TokenThemeAttribute {
     public var key: String = "italic"
     
     public init() {}

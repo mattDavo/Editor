@@ -8,7 +8,7 @@
 import Foundation
 import EditorCore
 
-public struct BackgroundColorThemeAttribute: TokenThemeAttribute {
+public class BackgroundColorThemeAttribute: TokenThemeAttribute {
     
     public var key = "background-color"
     public var color: Color

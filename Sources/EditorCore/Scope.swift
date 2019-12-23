@@ -7,12 +7,26 @@
 
 import Foundation
 
-struct Scope {
+class Scope {
     var name: String
     var rules: [Rule]
     var end: NSRegularExpression?
+    var attributes: [ThemeAttribute]
     var isContentScope = false
-    var attributes: [ThemeAttribute] = []
+    
+    init(
+        name: String,
+        rules: [Rule],
+        end: NSRegularExpression? = nil,
+        attributes: [ThemeAttribute],
+        isContentScope: Bool = false
+    ) {
+        self.name = name
+        self.rules = rules
+        self.end = end
+        self.attributes = attributes
+        self.isContentScope = isContentScope
+    }
 }
 
 extension Scope: Equatable {

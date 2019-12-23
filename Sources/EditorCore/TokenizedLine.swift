@@ -7,10 +7,15 @@
 
 import Foundation
 
-public struct TokenizedLine {
+public class TokenizedLine {
     
-    public var tokens: [Token]
+    var tokens: [Token]
     public var state: LineState
+    
+    init(tokens: [Token] = [], state: LineState) {
+        self.tokens = tokens
+        self.state = state
+    }
     
     public var length: Int {
         guard let last = tokens.last else {
@@ -19,23 +24,23 @@ public struct TokenizedLine {
         return last.range.upperBound
     }
     
-    mutating func addToken(_ token: Token) {
+    func addToken(_ token: Token) {
         cleanLast()
         tokens.append(token)
     }
     
-    mutating func addTokens(_ tokens: [Token]) {
+    func addTokens(_ tokens: [Token]) {
         cleanLast()
         self.tokens += tokens
     }
     
-    mutating func cleanLast() {
+    func cleanLast() {
         if tokens.last?.range.length == 0 {
             tokens.removeLast()
         }
     }
     
-    mutating func increaseLastTokenLength(by len: Int = 1) {
+    func increaseLastTokenLength(by len: Int = 1) {
         tokens[tokens.count - 1].range.length += len
     }
     

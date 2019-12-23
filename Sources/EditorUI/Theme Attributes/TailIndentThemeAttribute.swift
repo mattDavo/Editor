@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct TailIndentThemeAttribute: LineThemeAttribute {
+public class TailIndentThemeAttribute: LineThemeAttribute {
     
     public let key = "tail-indent"
     public let value: CGFloat

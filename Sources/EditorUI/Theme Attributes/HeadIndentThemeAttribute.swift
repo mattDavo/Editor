@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-public struct HeadIndentThemeAttribute: LineThemeAttribute {
+public class HeadIndentThemeAttribute: LineThemeAttribute {
     
     public let key = "head-indent"
     public let value: CGFloat

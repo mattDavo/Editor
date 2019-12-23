@@ -25,7 +25,7 @@ public struct BoldThemeAttribute: ThemeAttribute {
 #elseif os(macOS)
 import Cocoa
 
-public struct BoldThemeAttribute: TokenThemeAttribute {
+public class BoldThemeAttribute: TokenThemeAttribute {
     public var key: String = "bold"
     
     public init() {}

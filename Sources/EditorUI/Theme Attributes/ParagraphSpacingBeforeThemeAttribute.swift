@@ -13,7 +13,7 @@ import EditorCore
 #elseif os(macOS)
 import Cocoa
 
-public struct ParagraphSpacingBeforeThemeAttribute: LineThemeAttribute {
+public class ParagraphSpacingBeforeThemeAttribute: LineThemeAttribute {
     
     public let key = "para-spacing-before"
     public let spacing: CGFloat
