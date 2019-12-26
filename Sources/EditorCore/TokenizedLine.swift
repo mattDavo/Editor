@@ -44,17 +44,23 @@ public class TokenizedLine {
         tokens[tokens.count - 1].range.length += len
     }
     
-    public func applyTheme(_ attributedString: NSMutableAttributedString, at loc: Int) {
+    public func applyTheme(_ attributedString: NSMutableAttributedString, at loc: Int, inSelectionScope: Bool = false) {
         let style = MutableParagraphStyle()
+        
+        attributedString.setAttributes(nil, range: NSRange(location: loc, length: length))
         
         for token in tokens {
             for scope in token.scopes {
                 for attr in scope.attributes {
                     if let lineAttr = attr as? LineThemeAttribute {
-                        lineAttr.apply(to: style)
+                        lineAttr.apply(to: style, inSelectionScope: inSelectionScope)
                     }
                     else if let tokenAttr = attr as? TokenThemeAttribute {
-                        tokenAttr.apply(to: attributedString, withRange: NSRange(location: loc + token.range.location, length: token.range.length))
+                        tokenAttr.apply(to: attributedString, withRange: NSRange(location: loc + token.range.location, length: token.range.length), inSelectionScope: inSelectionScope)
+                    }
+                    
+                    else {
+                        print("Warning: ThemeAttribute with key \(attr.key) does not conform to either LineThemeAttribute or TokenThemeAttribtue so it will not be applied.")
                     }
                 }
             }

@@ -17,7 +17,22 @@ public class FontThemeAttribute: TokenThemeAttribute {
         self.font = font
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
         attrStr.addAttribute(.font, value: font, range: range)
+    }
+}
+
+import Cocoa
+public class KernThemeAttribute: TokenThemeAttribute {
+    
+    public let key = "kern"
+    public let kern: Float
+    
+    public init(kern: Float = 0) {
+        self.kern = kern
+    }
+    
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+        attrStr.addAttribute(.kern, value: kern, range: range)
     }
 }

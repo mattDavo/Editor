@@ -10,18 +10,23 @@ import EditorCore
 
 public class ActionThemeAttribute: TokenThemeAttribute {
     
-    public let key = "action"
-    public let linkId: String
-    public let underlineColor: Color
+    public typealias Handler = (String, NSRange) -> Void
     
-    public init(linkId: String, underlineColor: Color = .clear) {
-        self.linkId = linkId
-        self.underlineColor = underlineColor
+    public static let HandlerKey = NSAttributedString.Key("linkHandler")
+    
+    public let key = "action"
+    public let actionId: String
+    public let handler: Handler?
+    
+    public init(actionId: String, handler: Handler? = nil) {
+        self.actionId = actionId
+        self.handler = handler
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
-        attrStr.addAttribute(.link, value: "", range: range)
-        attrStr.addAttribute(NSAttributedString.Key(rawValue: "linkId"), value: linkId, range: range)
-        attrStr.addAttribute(.underlineColor, value: underlineColor, range: range)
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+        attrStr.addAttribute(.link, value: actionId, range: range)
+        if let handler = handler {
+            attrStr.addAttribute(Self.HandlerKey, value: handler, range: range)
+        }
     }
 }

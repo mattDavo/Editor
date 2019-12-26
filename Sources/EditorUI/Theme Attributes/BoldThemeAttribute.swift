@@ -30,17 +30,11 @@ public class BoldThemeAttribute: TokenThemeAttribute {
     
     public init() {}
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
         let font = attrStr.attributes(at: range.location, effectiveRange: nil)[.font] as? NSFont ?? NSFont()
-        let traits = font.fontDescriptor.symbolicTraits.union(.bold)
-        let desc = font.fontDescriptor.withSymbolicTraits(traits)
         
-        if let newFont = NSFont(descriptor: desc, size: font.pointSize) {
-            attrStr.addAttribute(.font, value: newFont, range: range)
-        }
-        else {
-            print("Warning: Failed to apply \(key) theme attribute to \(attrStr)")
-        }
+        let newFont = NSFontManager.shared.convert(font, toHaveTrait: .boldFontMask)
+        attrStr.addAttribute(.font, value: newFont, range: range)
     }
 }
 

@@ -20,11 +20,19 @@ public class EditorTextStorage: NSTextStorage {
     
     private var states = [LineState?]()
     
+    private var tokenizedLines = [TokenizedLine?]()
+    
     public var lastInvalidatedRange = NSRange(location: 0, length: 0)
     
     private var grammar: Grammar
     
     private var theme: Theme
+    
+    private var _isProcessingEditing = false
+    
+    public var isProcessingEditing: Bool {
+        _isProcessingEditing
+    }
     
     init(grammar: Grammar, theme: Theme) {
         storage = NSMutableAttributedString(string: "", attributes: nil)
@@ -74,7 +82,7 @@ public class EditorTextStorage: NSTextStorage {
     ///
     /// - Parameter string: The string to split into lines.
     /// - Returns: The string split into an array of newline containing lines.
-    /// - Note: if the document ends with a newline character despite the document being rendered as having an extra (empty) line, this is not actually so and is just rendered like this for a better UX. This 'fake' line will be included in the return value.
+    /// - Note: if the document ends with a newline character despite the document being rendered as having an extra (empty) line, this is not actually so and is just rendered like this for a better UX. This 'fake' line will not be included in the return value.
     ///
     private func getLines(string: String) -> [String] {
         // Split into lines with each line
@@ -95,17 +103,7 @@ public class EditorTextStorage: NSTextStorage {
         return lines
     }
     
-    ///
-    /// Gets the lines that need to be processed at a minimum.
-    ///
-    /// For typing edits this will normal just return that 1 or 2 lines. Paste edits will be able to return much larger ranges of lines.
-    ///
-    /// - Parameter lines: The lines to determine which need to be processed.
-    /// - Parameter editedRange: The range of characters which have been edited.
-    /// - Returns: A tuple of the first line that needs to be processed and the last line that needs to be processed.
-    ///
-    private func getProcessingLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
-        // We figure out the first line that was edited.
+    private func getEditedLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
         var firstEditedLine = 0
         var location = 0
         while firstEditedLine < lines.count {
@@ -126,6 +124,25 @@ public class EditorTextStorage: NSTextStorage {
             lastEditedLine += 1
         }
         
+        firstEditedLine = min(firstEditedLine, lines.count - 1)
+        lastEditedLine = min(lastEditedLine, lines.count - 1)
+        
+        return (firstEditedLine, lastEditedLine)
+    }
+    
+    ///
+    /// Gets the lines that need to be processed at a minimum.
+    ///
+    /// For typing edits this will normal just return that 1 or 2 lines. Paste edits will be able to return much larger ranges of lines.
+    ///
+    /// - Parameter lines: The lines to determine which need to be processed.
+    /// - Parameter editedRange: The range of characters which have been edited.
+    /// - Returns: A tuple of the first line that needs to be processed and the last line that needs to be processed.
+    ///
+    private func getProcessingLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
+        // We figure out the first and last lines that were edited.
+        var (firstEditedLine, lastEditedLine) = getEditedLines(lines: lines, editedRange: editedRange)
+        
         // We add 1 to the last edited line if a newline was the last character of the edit to extend the edited range to enforce checking the new line as well.
         let text = lines.joined()
         // Take the last edited utf16 character in the range. Since NSRanges are based on utf16 characters.
@@ -137,7 +154,8 @@ public class EditorTextStorage: NSTextStorage {
             }
         }
         
-        // Cap the last line incase the position is at the end of the document, which is technically after the last line.
+        // Cap the lines incase the position is at the end of the document, which is technically after the last line.
+        firstEditedLine = min(firstEditedLine, lines.count - 1)
         lastEditedLine = min(lastEditedLine, lines.count - 1)
         
         return (firstEditedLine, lastEditedLine)
@@ -158,6 +176,14 @@ public class EditorTextStorage: NSTextStorage {
                 else {
                     states.insert(nil, at: firstEditedLine + 1)
                 }
+            }
+        }
+        for _ in 0..<abs(changeInLines) {
+            if changeInLines < 0 {
+                tokenizedLines.remove(at: firstEditedLine)
+            }
+            else {
+                tokenizedLines.insert(nil, at: firstEditedLine)
             }
         }
     }
@@ -194,6 +220,10 @@ public class EditorTextStorage: NSTextStorage {
             states.append(grammar.createFirstLineState(theme: theme))
         }
         
+        if self.tokenizedLines.isEmpty {
+            self.tokenizedLines = .init(repeating: nil, count: lines.count)
+        }
+        
         var processingLine = processingLines.first
         var tokenizedLines = [TokenizedLine]()
         while processingLine <= processingLines.last {
@@ -205,6 +235,8 @@ public class EditorTextStorage: NSTextStorage {
             // Tokenize the line
             let tokenizedLine = grammar.tokenize(line: lines[processingLine], state: state, withTheme: theme)
             tokenizedLines.append(tokenizedLine)
+            
+            self.tokenizedLines[processingLine] = tokenizedLine
             
             // See if the state (for the next line) was previously cached
             if processingLine + 1 < states.count {
@@ -241,12 +273,21 @@ public class EditorTextStorage: NSTextStorage {
         
         let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
         
+        guard !self.tokenizedLines.contains(where: {$0==nil}) && self.tokenizedLines.count == lines.count else {
+            fatalError("Failed to cache tokenized lines correctly")
+        }
+        
         return (processedRange, invalidatedRange)
     }
     
     public override func processEditing() {
+        _isProcessingEditing = true
         let editedRange = self.editedRange
         super.processEditing()
+        
+        if !editedMask.contains(.editedCharacters) {
+            return
+        }
         
         let (range, invalidatedRange) = processSyntaxHighlighting(editedRange: editedRange)
         print("editedRange: \(editedRange)")
@@ -259,6 +300,7 @@ public class EditorTextStorage: NSTextStorage {
         layoutManagers.forEach { manager in
             manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: invalidatedRange)
         }
+        _isProcessingEditing = false
     }
     
     public func replace(grammar: Grammar, theme: Theme) {
@@ -266,5 +308,54 @@ public class EditorTextStorage: NSTextStorage {
         self.theme = theme
         states = []
         edited(.editedAttributes, range: fullRange, changeInLength: 0)
+    }
+    
+    var selectionLines = Set<Int>()
+    
+    public func updateSelectedRanges(_ selectedRanges: [NSRange]) {
+        // Return if empty
+        if string.isEmpty {
+            return
+        }
+        
+        // Split the string into lines.
+        let lines = getLines(string: string)
+        
+        // Find the lines of selection
+        var selectionLines = Set<Int>()
+        for range in selectedRanges {
+            let (i, j) = getEditedLines(lines: lines, editedRange: range)
+            for x in i...j {
+                selectionLines.insert(x)
+            }
+        }
+        
+        // Find the new and removed lines of selection
+        let newLines = selectionLines.subtracting(self.selectionLines)
+        let removedLines = self.selectionLines.subtracting(selectionLines)
+        
+        // Update selectionLines
+        self.selectionLines = selectionLines
+        
+        // Update the selected and unselected lines
+        var lineLoc = 0
+        for i in 0..<lines.count {
+            guard let tokenizedLine = self.tokenizedLines[i] else {
+                fatalError()
+            }
+            
+            if newLines.contains(i) {
+                tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: true)
+            }
+            if removedLines.contains(i) {
+                tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: false)
+            }
+            
+            lineLoc += tokenizedLine.length
+        }
+        
+        layoutManagers.forEach { manager in
+            manager.processEditing(for: self, edited: .editedAttributes, range: fullRange, changeInLength: 0, invalidatedRange: fullRange)
+        }
     }
 }
