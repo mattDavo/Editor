@@ -56,7 +56,7 @@ public class Editor: NSObject {
         }
         
         // Update selected ranges
-        storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue})
+        storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue}, forceAllSelected: true)
         
         // Layout the view for the invalidated visible range.
         // Get the visible range

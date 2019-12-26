@@ -282,6 +282,9 @@ public class EditorTextStorage: NSTextStorage {
     
     public override func processEditing() {
         _isProcessingEditing = true
+        defer {
+            _isProcessingEditing = false
+        }
         let editedRange = self.editedRange
         super.processEditing()
         
@@ -300,7 +303,6 @@ public class EditorTextStorage: NSTextStorage {
         layoutManagers.forEach { manager in
             manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: invalidatedRange)
         }
-        _isProcessingEditing = false
     }
     
     public func replace(grammar: Grammar, theme: Theme) {
@@ -312,7 +314,7 @@ public class EditorTextStorage: NSTextStorage {
     
     var selectionLines = Set<Int>()
     
-    public func updateSelectedRanges(_ selectedRanges: [NSRange]) {
+    public func updateSelectedRanges(_ selectedRanges: [NSRange], forceAllSelected: Bool = false) {
         // Return if empty
         if string.isEmpty {
             return
@@ -331,7 +333,7 @@ public class EditorTextStorage: NSTextStorage {
         }
         
         // Find the new and removed lines of selection
-        let newLines = selectionLines.subtracting(self.selectionLines)
+        let newLines = selectionLines.subtracting(forceAllSelected ? .init() : self.selectionLines)
         let removedLines = self.selectionLines.subtracting(selectionLines)
         
         // Update selectionLines
@@ -339,6 +341,7 @@ public class EditorTextStorage: NSTextStorage {
         
         // Update the selected and unselected lines
         var lineLoc = 0
+        var rangesChanged = [NSRange]()
         for i in 0..<lines.count {
             guard let tokenizedLine = self.tokenizedLines[i] else {
                 fatalError()
@@ -346,16 +349,21 @@ public class EditorTextStorage: NSTextStorage {
             
             if newLines.contains(i) {
                 tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: true)
+                rangesChanged.append(NSRange(location: lineLoc, length: tokenizedLine.length))
             }
             if removedLines.contains(i) {
                 tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: false)
+                rangesChanged.append(NSRange(location: lineLoc, length: tokenizedLine.length))
             }
             
             lineLoc += tokenizedLine.length
         }
         
-        layoutManagers.forEach { manager in
-            manager.processEditing(for: self, edited: .editedAttributes, range: fullRange, changeInLength: 0, invalidatedRange: fullRange)
+        for rangeChanged in rangesChanged {
+            fixAttributes(in: rangeChanged)
+            layoutManagers.forEach { manager in
+                manager.processEditing(for: self, edited: .editedAttributes, range: rangeChanged, changeInLength: 0, invalidatedRange: rangeChanged)
+            }
         }
     }
 }
