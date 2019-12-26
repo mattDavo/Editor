@@ -188,13 +188,28 @@ public class EditorTextStorage: NSTextStorage {
         }
     }
     
+    private func getCursorLine(lines: [String], editedRange: NSRange) -> Int {
+        // We figure out line the cursor will be on
+        var location = 0
+        var cursorLine = 0
+        while cursorLine < lines.count {
+            if editedRange.upperBound < location + lines[cursorLine].utf16.count {
+                break
+            }
+            location += lines[cursorLine].utf16.count
+            cursorLine += 1
+        }
+        
+        return cursorLine
+    }
+    
     ///
     /// Processes syntax highlighting on the minimum range possible.
     ///
     /// - Parameter editedRange: The range of the edit, if known. If the edited range is  provided the syntax highlighting will be done by processing the least amount of the document as possible using the pevious state of the document.
     /// - Returns: A tuple containing the edited range and the invalidated range. The edited range is the range of the string that was processed and attributes were applied. The invalidated range is the range of characters that were changed as a result of the edit, e.g. if lines were added or deleted, it will included all of the lines afterwards, so we can re-render the view.
     ///
-    func processSyntaxHighlighting(editedRange: NSRange? = nil) -> (NSRange, NSRange) {
+    func processSyntaxHighlighting(editedRange: NSRange) -> (NSRange, NSRange) {
         // Return if empty
         if string.isEmpty {
             return (storage.fullRange, storage.fullRange)
@@ -209,8 +224,8 @@ public class EditorTextStorage: NSTextStorage {
         // Calculate the change in number of lines and adjust the states array
         let change = lines.count - states.count + 1
         
-        // If we know the edited range and have cached states for the lines we do not need to process the entire string, we can simply on process the lines that have changed or lines afterwards that have been affected by the change.
-        if let editedRange = editedRange, !states.isEmpty {
+        // If we have cached states for the lines we do not need to process the entire string, we can simply on process the lines that have changed or lines afterwards that have been affected by the change.
+        if !states.isEmpty {
             processingLines = getProcessingLines(lines: lines, editedRange: editedRange)
             adjustStates(firstEditedLine: processingLines.first, changeInLines: change)
         }
@@ -256,12 +271,19 @@ public class EditorTextStorage: NSTextStorage {
             processingLine += 1
         }
         
+        // Get the line of the cursor (sort of). TODO: Fix. Not always correct. Processing lines are also not always correct, sometimes processing an extra line.
+        let cursorLine = getCursorLine(lines: lines, editedRange: editedRange)
+        if cursorLine < lines.count {
+            selectionLines.removeAll()
+            selectionLines.insert(cursorLine)
+        }
+        
         let startOfProcessing = lines[0..<processingLines.first].reduce(0, {$0 + $1.utf16.count})
         
         var lineLoc = startOfProcessing
-        tokenizedLines.forEach {
-            $0.applyTheme(storage, at: lineLoc)
-            lineLoc += $0.length
+        tokenizedLines.enumerated().forEach {
+            $1.applyTheme(storage, at: lineLoc, inSelectionScope: $0 + processingLines.first == cursorLine)
+            lineLoc += $1.length
         }
         
         let processedRange = NSRange(location: startOfProcessing, length: lineLoc - startOfProcessing)
@@ -281,12 +303,18 @@ public class EditorTextStorage: NSTextStorage {
     }
     
     public override func processEditing() {
+        let editedRange = self.editedRange
         _isProcessingEditing = true
         defer {
             _isProcessingEditing = false
         }
-        let editedRange = self.editedRange
-        super.processEditing()
+        
+        // Replicate super.processEditing() without the fixAttributes as we will do that later
+        NotificationCenter.default.post(name: NSTextStorage.willProcessEditingNotification, object: self)
+        NotificationCenter.default.post(name: NSTextStorage.didProcessEditingNotification, object: self)
+        layoutManagers.forEach { manager in
+            manager.processEditing(for: self, edited: editedMask, range: editedRange, changeInLength: changeInLength, invalidatedRange: editedRange)
+        }
         
         if !editedMask.contains(.editedCharacters) {
             return
@@ -314,7 +342,7 @@ public class EditorTextStorage: NSTextStorage {
     
     var selectionLines = Set<Int>()
     
-    public func updateSelectedRanges(_ selectedRanges: [NSRange], forceAllSelected: Bool = false) {
+    public func updateSelectedRanges(_ selectedRanges: [NSRange]) {
         // Return if empty
         if string.isEmpty {
             return
@@ -333,7 +361,7 @@ public class EditorTextStorage: NSTextStorage {
         }
         
         // Find the new and removed lines of selection
-        let newLines = selectionLines.subtracting(forceAllSelected ? .init() : self.selectionLines)
+        let newLines = selectionLines.subtracting(self.selectionLines)
         let removedLines = self.selectionLines.subtracting(selectionLines)
         
         // Update selectionLines

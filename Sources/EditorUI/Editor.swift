@@ -55,24 +55,6 @@ public class Editor: NSObject {
             return
         }
         
-        // Update selected ranges
-        storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue}, forceAllSelected: true)
-        
-        // Layout the view for the invalidated visible range.
-        // Get the visible range
-        let visibleRange = layoutManager.glyphRange(forBoundingRect: textView.visibleRect, in: textContainer)
-        // Get the intersection of the invalidated range and visible range.
-        // If there is no intersection, no display needed.
-        if let visibleInvalid = visibleRange.intersection(storage.lastInvalidatedRange) {
-            // Try to get the bounding rect of the invalid range and only re-render it, otherwise re-render the entire text view.
-            if let rect = textView.boundingRect(forCharacterRange: visibleInvalid) {
-                textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
-            }
-            else {
-                textView.needsDisplay = true
-            }
-        }
-        
         // Check EOF
         if !storage.string.isEmpty && storage.string.last != "\n" {
             let prev = textView.selectedRanges
