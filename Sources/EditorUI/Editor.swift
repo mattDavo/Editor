@@ -147,7 +147,8 @@ extension Editor: NSLayoutManagerDelegate {
 
             let matchingHiddenRanges = hiddenRanges.filter { NSLocationInRange(characterIndex, $0) }
             if !matchingHiddenRanges.isEmpty {
-                modifiedGlyphProperties[i] = .null
+                // Note: .null is the value that makes sense here, however it causes strange indentation issues when the first glyph on the line is hidden.
+                modifiedGlyphProperties[i] = .controlCharacter
             }
         }
         
