@@ -15,9 +15,7 @@ class EditorLayoutManager: NSLayoutManager {
     
     // Inspiration from : https://instagram-engineering.com/building-type-mode-for-stories-on-ios-and-android-8804e927feba
     override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
-        defer {
-            super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
-        }
+        super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
         
         guard let textStorage = textStorage else {
             return

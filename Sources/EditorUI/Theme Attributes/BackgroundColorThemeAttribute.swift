@@ -33,24 +33,32 @@ public class BackgroundColorThemeAttribute: TokenThemeAttribute {
         case line, textOnly
     }
     
-    public struct RoundedBackground {
+    public class RoundedBackground {
         
         public static let Key = NSAttributedString.Key(rawValue: "EditorUI.RoundedBackgroundColor")
         
         let color: Color
         let roundingStyle: RoundingStyle
         let coloringStyle: ColoringStyle
+        
+        public init(color: Color, roundingStyle: RoundingStyle, coloringStyle: ColoringStyle) {
+            self.color = color
+            self.roundingStyle = roundingStyle
+            self.coloringStyle = coloringStyle
+        }
     }
     
     public var key = "background-color"
     public var color: Color
     public var roundingStyle: RoundingStyle
     public var coloringStyle: ColoringStyle
+    public let roundedBackground: RoundedBackground
     
     public init(color: Color, roundingStyle: RoundingStyle = .none, coloringStyle: ColoringStyle = .textOnly) {
         self.color = color
         self.roundingStyle = roundingStyle
         self.coloringStyle = coloringStyle
+        self.roundedBackground = RoundedBackground(color: color, roundingStyle: roundingStyle, coloringStyle: coloringStyle)
     }
     
     public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
@@ -58,7 +66,7 @@ public class BackgroundColorThemeAttribute: TokenThemeAttribute {
             attrStr.addAttribute(.backgroundColor, value: color, range: range)
         }
         else {
-            attrStr.addAttribute(RoundedBackground.Key, value: RoundedBackground(color: color, roundingStyle: roundingStyle, coloringStyle: coloringStyle), range: range)
+            attrStr.addAttribute(RoundedBackground.Key, value: self.roundedBackground, range: range)
         }
     }
 }
