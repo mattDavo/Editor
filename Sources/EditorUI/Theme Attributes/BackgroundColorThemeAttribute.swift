@@ -45,7 +45,7 @@ public class BackgroundColorThemeAttribute: TokenThemeAttribute {
         self.roundingStyle = roundingStyle
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         if roundingStyle == .none {
             attrStr.addAttribute(.backgroundColor, value: color, range: range)
         }

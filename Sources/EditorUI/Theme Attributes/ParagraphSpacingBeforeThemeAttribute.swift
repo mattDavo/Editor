@@ -22,7 +22,7 @@ public class ParagraphSpacingBeforeThemeAttribute: LineThemeAttribute {
         self.spacing = spacing
     }
     
-    public func apply(to style: MutableParagraphStyle, inSelectionScope: Bool) {
+    public func apply(to style: MutableParagraphStyle) {
         style.paragraphSpacingBefore = spacing
     }
 }

@@ -23,7 +23,7 @@ public class HeadIndentThemeAttribute: LineThemeAttribute {
         self.value = value
     }
     
-    public func apply(to style: MutableParagraphStyle, inSelectionScope: Bool) {
+    public func apply(to style: MutableParagraphStyle) {
         style.headIndent = value
     }
 }

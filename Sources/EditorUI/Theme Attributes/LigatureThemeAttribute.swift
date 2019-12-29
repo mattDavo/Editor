@@ -17,7 +17,7 @@ public class LigatureThemeAttribute: TokenThemeAttribute {
         self.ligature = ligature
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.ligature, value: ligature, range: range)
     }
 }
