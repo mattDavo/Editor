@@ -8,11 +8,6 @@
 import Foundation
 import EditorCore
 
-#if os(iOS)
-
-#elseif os(macOS)
-import Cocoa
-
 public class ParagraphSpacingBeforeThemeAttribute: LineThemeAttribute {
     
     public let key = "para-spacing-before"
@@ -26,5 +21,3 @@ public class ParagraphSpacingBeforeThemeAttribute: LineThemeAttribute {
         style.paragraphSpacingBefore = spacing
     }
 }
-
-#endif

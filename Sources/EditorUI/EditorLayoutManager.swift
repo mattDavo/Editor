@@ -34,25 +34,38 @@ class EditorLayoutManager: NSLayoutManager {
                 return
             }
             
-            var rectCount = -1
-            guard let rectArray = self.rectArray(forCharacterRange: range, withinSelectedCharacterRange: range, in: textContainer, rectCount: &rectCount) else {
-                fatalError("Failed to received rect array for characterRange: \(range), within selected character range: \(range), in text container: \(textContainer)")
+            if roundedBackground.coloringStyle == .textOnly {
+                var rectCount = -1
+                guard let rectArray = self.rectArray(forCharacterRange: range, withinSelectedCharacterRange: range, in: textContainer, rectCount: &rectCount) else {
+                    fatalError("Failed to received rect array for characterRange: \(range), within selected character range: \(range), in text container: \(textContainer)")
+                }
+                
+                guard rectCount != -1 else {
+                    fatalError("Failed to receive rect array count.")
+                }
+                
+                let lineHeight = lineFragmentRect(forGlyphAt: range.location, effectiveRange: nil).height
+                let cornerRadius = lineHeight * roundedBackground.roundingStyle.rawValue / 2
+                
+                // Adjust for text container insets
+                for i in 0..<rectCount {
+                    rectArray[i] = rectArray[i].offsetBy(dx: origin.x, dy: origin.y)
+                    rectArray[i] = rectArray[i].insetBy(dx: -5, dy: 0)
+                }
+                
+                self.fillRoundedBackgroundRectArray(rectArray, count: rectCount, color: roundedBackground.color, cornerRadius: cornerRadius)
             }
-            
-            guard rectCount != -1 else {
-                fatalError("Failed to receive rect array count.")
+            else if roundedBackground.coloringStyle == .line {
+
+                var rect = lineFragmentRect(forGlyphAt: range.location, effectiveRange: nil)
+                let cornerRadius = rect.height * roundedBackground.roundingStyle.rawValue / 2
+                
+                // Adjust for text container insets
+                rect = rect.offsetBy(dx: origin.x, dy: origin.y)
+                rect = rect.insetBy(dx: -5, dy: 0)
+                
+                self.fillRoundedBackgroundRectArray(rect, color: roundedBackground.color, cornerRadius: cornerRadius)
             }
-            
-            let lineHeight = lineFragmentRect(forGlyphAt: range.location, effectiveRange: nil).height
-            let cornerRadius = lineHeight * roundedBackground.style.rawValue / 2
-            
-            // Adjust for text container insets
-            for i in 0..<rectCount {
-                rectArray[i] = rectArray[i].offsetBy(dx: origin.x, dy: origin.y)
-                rectArray[i] = rectArray[i].insetBy(dx: -5, dy: 0)
-            }
-            
-            self.fillRoundedBackgroundRectArray(rectArray, count: rectCount, color: roundedBackground.color, cornerRadius: cornerRadius)
         })
     }
     
@@ -88,6 +101,25 @@ class EditorLayoutManager: NSLayoutManager {
             path.closeSubpath()
 
         }
+
+        color.set()
+        
+        let cgContext = NSGraphicsContext.current?.cgContext
+        cgContext?.setLineWidth(cornerRadius * 2.0)
+        cgContext?.setLineJoin(.round)
+
+        cgContext?.setAllowsAntialiasing(true)
+        cgContext?.setShouldAntialias(true)
+
+        cgContext?.addPath(path)
+        cgContext?.drawPath(using: .fillStroke)
+    }
+    
+    func fillRoundedBackgroundRectArray(_ rect: NSRect, color: NSColor, cornerRadius: CGFloat) {
+        
+        let path = CGMutablePath()
+
+        path.addRect(rect.insetBy(dx: cornerRadius, dy: cornerRadius))
 
         color.set()
         
