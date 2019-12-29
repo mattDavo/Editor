@@ -12,6 +12,8 @@ class Scope {
     var rules: [Rule]
     var end: NSRegularExpression?
     var attributes: [ThemeAttribute]
+    var inSelectionAttributes: [ThemeAttribute]
+    var outSelectionAttributes: [ThemeAttribute]
     var isContentScope = false
     
     init(
@@ -19,12 +21,30 @@ class Scope {
         rules: [Rule],
         end: NSRegularExpression? = nil,
         attributes: [ThemeAttribute],
+        inSelectionAttributes: [ThemeAttribute],
+        outSelectionAttributes: [ThemeAttribute],
         isContentScope: Bool = false
     ) {
         self.name = name
         self.rules = rules
         self.end = end
         self.attributes = attributes
+        self.inSelectionAttributes = inSelectionAttributes
+        self.outSelectionAttributes = outSelectionAttributes
+        self.isContentScope = isContentScope
+    }
+    
+    init(
+        name: String,
+        rules: [Rule],
+        end: NSRegularExpression? = nil,
+        theme: Theme,
+        isContentScope: Bool = false
+    ) {
+        self.name = name
+        self.rules = rules
+        self.end = end
+        (self.attributes, self.inSelectionAttributes, self.outSelectionAttributes) = theme.allAttributes(forScope: name)
         self.isContentScope = isContentScope
     }
 }

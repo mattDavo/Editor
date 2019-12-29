@@ -17,7 +17,7 @@ public class FontThemeAttribute: TokenThemeAttribute {
         self.font = font
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.font, value: font, range: range)
     }
 }

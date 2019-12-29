@@ -62,14 +62,23 @@ public class Grammar {
                 name: scopeName,
                 rules: rules,
                 end: nil,
-                attributes: theme.attributes(forScope: scopeName)
+                theme: theme
             )
         ])
     }
     
     public func baseAttributes(forTheme theme: Theme) -> [NSAttributedString.Key: Any] {
         let line = TokenizedLine(tokens: [
-            Token(range: NSRange(location: 0, length: 1), scopes: [Scope(name: scopeName, rules: [], attributes: theme.attributes(forScope: scopeName))])
+            Token(
+                range: NSRange(location: 0, length: 1),
+                scopes: [
+                    Scope(
+                        name: scopeName,
+                        rules: [],
+                        theme: theme
+                    )
+                ]
+            )
         ], state: LineState(scopes: []))
         let str = NSMutableAttributedString(string: "a")
         line.applyTheme(str, at: 0)
@@ -133,7 +142,11 @@ public class Grammar {
                         // Set matched flag
                         matched = true
                         // Create a new scope
-                        let scope = Scope(name: rule.name, rules: [], attributes: theme.attributes(forScope: rule.name))
+                        let scope = Scope(
+                            name: rule.name,
+                            rules: [],
+                            theme: theme
+                        )
                         
                         // Create ordered list of tokens
                         // Start with just one token for the entire range of the match.
@@ -149,7 +162,11 @@ public class Grammar {
                             // Get the capture definition from the rule
                             let capture = rule.captures[i]
                             // Create a scope for the capture.
-                            let captureScope = Scope(name: capture.name ?? "", rules: capture.resolveRules(grammar: self), attributes: theme.attributes(forScope: capture.name ?? ""))
+                            let captureScope = Scope(
+                                name: capture.name ?? "",
+                                rules: capture.resolveRules(grammar: self),
+                                theme: theme
+                            )
                             // Create the capture state (the current state, with the capture state)
                             let captureState = LineState(scopes: state.scopes + [captureScope])
                             
@@ -236,7 +253,12 @@ public class Grammar {
                         // Set matched flag
                         matched = true
                         // Create a new scope for the BeginEndRule and add it to the state.
-                        let scope = Scope(name: rule.name, rules: rule.resolveRules(grammar: self), end: rule.end, attributes: theme.attributes(forScope: rule.name))
+                        let scope = Scope(
+                            name: rule.name,
+                            rules: rule.resolveRules(grammar: self),
+                            end: rule.end,
+                            theme: theme
+                        )
                         state.scopes.append(scope)
                         
                         // Add a new token for the begin match of the BeginEndRule
@@ -249,7 +271,7 @@ public class Grammar {
                             state.scopes.append(Scope(
                                 name: contentName, rules: rule.resolveRules(grammar: self),
                                 end: rule.end,
-                                attributes: theme.attributes(forScope: contentName),
+                                theme: theme,
                                 isContentScope: true
                             ))
                             // Start a new token for the content between the begin and end matches.

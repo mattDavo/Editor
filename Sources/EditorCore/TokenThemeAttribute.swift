@@ -12,5 +12,5 @@ import Foundation
 /// - Important: Do not try to configure the `paragraphStyle` attribute, as it may not produce the expected behavior. Instead conform to `LineThemeAttribute`
 public protocol TokenThemeAttribute: ThemeAttribute {
     
-    func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool)
+    func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange)
 }
