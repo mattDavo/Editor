@@ -18,6 +18,12 @@ public class EditorTextStorage: NSTextStorage {
     
     private var storage: NSMutableAttributedString
     
+    private var lineRanges: [NSRange]
+    
+    var lineStartLocs: [Int] {
+        return lineRanges.map {$0.location}
+    }
+    
     private var states = [LineState?]()
     
     private var tokenizedLines = [TokenizedLine?]()
@@ -36,6 +42,7 @@ public class EditorTextStorage: NSTextStorage {
     
     init(grammar: Grammar, theme: Theme) {
         storage = NSMutableAttributedString(string: "", attributes: nil)
+        self.lineRanges = [NSRange(location: 0, length: 0)]
         self.grammar = grammar
         self.theme = theme
         super.init()
@@ -64,12 +71,86 @@ public class EditorTextStorage: NSTextStorage {
     
     override public func replaceCharacters(in range: NSRange, with str: String) {
         beginEditing()
+        
+        // First update the storage
         storage.replaceCharacters(in: range, with:str)
-        edited(.editedCharacters, range: range,
-             changeInLength: (str as NSString).length - range.length)
+        
+        // Then update the line ranges
+        updateLineRanges(forCharactersReplacedInRange: range, with: str)
+        
+        // Check the line ranges in testing
+        checkLineRanges()
+        
+        edited(.editedCharacters, range: range, changeInLength: (str as NSString).length - range.length)
         endEditing()
     }
-      
+    
+    private func updateLineRanges(forCharactersReplacedInRange range: NSRange, with str: String) {
+        // First remove the line start locations in the affected range
+        var line = 0
+        if range.length != 0 {
+            var foundFirstMatch = false
+            while line < lineRanges.count {
+                if range.contains(lineRanges[line].location - 1) {
+                    foundFirstMatch = true
+                    lineRanges.remove(at: line)
+                }
+                else if !foundFirstMatch {
+                    line += 1
+                }
+                else {
+                    break
+                }
+            }
+        }
+        
+        // Find the line index for where to insert any new line start locations
+        line = 0
+        while line < lineRanges.count && range.location > lineRanges[line].location - 1 {
+            line += 1
+        }
+
+        // Find the new line start locations, adding the offset and 1 to get the location of the next line.
+        let newLineLocs = str.utf16.indices.filter{ str[$0] == "\n" }.map{
+            $0.utf16Offset(in: str) + 1 + range.location }
+        
+        // Create new line ranges with 0 length.
+        let newLineRanges = newLineLocs.map{ NSRange(location: $0, length: 0) }
+        lineRanges.insert(contentsOf: newLineRanges, at: line)
+        
+        // Shift the start locations after inserted ranges.
+        for i in line+newLineRanges.count..<lineRanges.count {
+            lineRanges[i].location += str.utf16.count - range.length
+        }
+        
+        // Update lengths of new ranges and the one before (as it may have changed)
+        for i in max(line-1, 0)..<min(lineRanges.count - 1, line+newLineRanges.count) {
+            lineRanges[i].length = lineRanges[i + 1].location - lineRanges[i].location
+        }
+        
+        // If the last line range is a new line range, we set the length based on the text storage.
+        if newLineRanges.count + line == lineRanges.count {
+            lineRanges[lineRanges.count - 1].length = storage.length - lineRanges[lineRanges.count - 1].location
+        }
+    }
+    
+    func checkLineRanges() {
+        assert(!lineRanges.isEmpty)
+        
+        var i = 0
+        while i < lineRanges.count-2 {
+            assert(lineRanges[i].upperBound == lineRanges[i+1].location)
+            i += 1
+        }
+        
+        if let lastNewLine = storage.string.lastIndex(of: "\n")?.utf16Offset(in: storage.string) {
+            assert(lineRanges.last!.length == storage.length - (lastNewLine + 1))
+        }
+        else {
+            assert(lineRanges.last?.length == storage.length)
+        }
+    }
+    
     override public func setAttributes(_ attrs: [NSAttributedString.Key: Any]?, range: NSRange) {
         beginEditing()
         storage.setAttributes(attrs, range: range)
@@ -101,6 +182,27 @@ public class EditorTextStorage: NSTextStorage {
         }
         
         return lines
+    }
+    
+    private func getEditedLines(lineStartLocs: [Int], editedRange: NSRange) -> (Int, Int) {
+        var first = 0
+        while first < lineStartLocs.count - 1 {
+            if editedRange.location < lineStartLocs[first+1] {
+                break
+            }
+            first += 1
+        }
+        
+        // We figure out the last line that was edited.
+        var last = first
+        while last < lineStartLocs.count - 1 {
+            if editedRange.upperBound <= lineStartLocs[last+1] {
+                break
+            }
+            last += 1
+        }
+        
+        return (first, last)
     }
     
     private func getEditedLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
@@ -168,16 +270,23 @@ public class EditorTextStorage: NSTextStorage {
     /// - Parameter changeInLines: The number of lines added or deleted.
     ///
     private func adjustStates(firstEditedLine: Int, changeInLines: Int) {
-        if states.count > 0 {
-            for _ in 0..<abs(changeInLines) {
-                if changeInLines < 0 {
-                    states.remove(at: firstEditedLine + 1)
-                }
-                else {
-                    states.insert(nil, at: firstEditedLine + 1)
-                }
+        for _ in 0..<abs(changeInLines) {
+            if changeInLines < 0 {
+                states.remove(at: firstEditedLine + 1)
+            }
+            else {
+                states.insert(nil, at: firstEditedLine + 1)
             }
         }
+    }
+    
+    ///
+    /// Modifies the length of the tokenized lines array based on the first edited line to prepare for the processing based of the previous states.
+    ///
+    /// - Parameter firstEditedLine: The first line that was edited.
+    /// - Parameter changeInLines: The number of lines added or deleted.
+    ///
+    private func adjustTokenizedLines(firstEditedLine: Int, changeInLines: Int) {
         for _ in 0..<abs(changeInLines) {
             if changeInLines < 0 {
                 tokenizedLines.remove(at: firstEditedLine)
@@ -212,7 +321,7 @@ public class EditorTextStorage: NSTextStorage {
     func processSyntaxHighlighting(editedRange: NSRange) -> (NSRange, NSRange) {
         // Return if empty
         if string.isEmpty {
-            return (storage.fullRange, storage.fullRange)
+            return (fullRange, fullRange)
         }
         
         // Split the string into lines.
@@ -225,18 +334,15 @@ public class EditorTextStorage: NSTextStorage {
         let change = lines.count - states.count + 1
         
         // If we have cached states for the lines we do not need to process the entire string, we can simply on process the lines that have changed or lines afterwards that have been affected by the change.
-        if !states.isEmpty {
+        if !states.isEmpty && !tokenizedLines.isEmpty {
             processingLines = getProcessingLines(lines: lines, editedRange: editedRange)
             adjustStates(firstEditedLine: processingLines.first, changeInLines: change)
+            adjustTokenizedLines(firstEditedLine: processingLines.first, changeInLines: change)
         }
-        
-        // Initialise the cache if it is empty.
-        if states.isEmpty {
-            states.append(grammar.createFirstLineState(theme: theme))
-        }
-        
-        if self.tokenizedLines.isEmpty {
-            self.tokenizedLines = .init(repeating: nil, count: lines.count)
+        else {
+            // Either both caches are empty or the cache is in an inconsistent state, either way, init both
+            tokenizedLines = .init(repeating: nil, count: lines.count)
+            states = [grammar.createFirstLineState(theme: theme)]
         }
         
         var processingLine = processingLines.first
@@ -325,6 +431,7 @@ public class EditorTextStorage: NSTextStorage {
         print("Range processed: \(range)")
         print("Range invalidated: \(invalidatedRange)")
         print()
+        print("Line start locs.count: \(lineStartLocs.count)")
         
         self.lastInvalidatedRange = invalidatedRange
         
@@ -348,13 +455,10 @@ public class EditorTextStorage: NSTextStorage {
             return
         }
         
-        // Split the string into lines.
-        let lines = getLines(string: string)
-        
         // Find the lines of selection
         var selectionLines = Set<Int>()
         for range in selectedRanges {
-            let (i, j) = getEditedLines(lines: lines, editedRange: range)
+            let (i, j) = getEditedLines(lineStartLocs: self.lineStartLocs, editedRange: range)
             for x in i...j {
                 selectionLines.insert(x)
             }
@@ -370,9 +474,10 @@ public class EditorTextStorage: NSTextStorage {
         // Update the selected and unselected lines
         var lineLoc = 0
         var rangesChanged = [NSRange]()
-        for i in 0..<lines.count {
-            guard let tokenizedLine = self.tokenizedLines[i] else {
-                fatalError()
+        for (i, tokenizedLine) in tokenizedLines.enumerated() {
+            guard let tokenizedLine = tokenizedLine else {
+                print("Warning: Unexpectedly found nil tokenized line at index \(i) in updateSelectedRanges")
+                continue
             }
             
             if newLines.contains(i) {
