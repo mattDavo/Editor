@@ -10,13 +10,11 @@ import Foundation
 public class Theme {
     
     var name: String
-    var settings: [ThemeSetting]
     
     var root: ThemeTrieElement
     
     public init(name: String, settings: [ThemeSetting]) {
         self.name = name
-        self.settings = settings
         
         self.root = Theme.createTrie(settings: settings)
     }
@@ -32,7 +30,13 @@ public class Theme {
     
     static func createTrie(settings: [ThemeSetting]) -> ThemeTrieElement {
         var settings = sortSettings(settings: settings)
-        let root = ThemeTrieElement(children: [:], attributes: [:], parentScopeElements: [:])
+        let root = ThemeTrieElement(
+            children: [:],
+            attributes: [:],
+            inSelectionAttributes: [:],
+            outSelectionAttributes: [:],
+            parentScopeElements: [:]
+        )
         
         if settings.count == 0 {
             return root
@@ -40,6 +44,16 @@ public class Theme {
         
         if settings[0].scope == "" {
             root.attributes = settings.removeFirst().attributes.reduce([:], {
+                var res = $0
+                res[$1.key] = $1
+                return res
+            })
+            root.inSelectionAttributes = settings.removeFirst().inSelectionAttributes.reduce([:], {
+                var res = $0
+                res[$1.key] = $1
+                return res
+            })
+            root.outSelectionAttributes = settings.removeFirst().outSelectionAttributes.reduce([:], {
                 var res = $0
                 res[$1.key] = $1
                 return res
@@ -63,7 +77,13 @@ public class Theme {
                 curr = child
             }
             else {
-                let new = ThemeTrieElement(children: [:], attributes: [:], parentScopeElements: [:])
+                let new = ThemeTrieElement(
+                    children: [:],
+                    attributes: [:],
+                    inSelectionAttributes: [:],
+                    outSelectionAttributes: [:],
+                    parentScopeElements: [:]
+                )
                 curr.children[String(comp)] = new
                 prev = curr
                 curr = new
@@ -74,8 +94,16 @@ public class Theme {
             return
         }
         curr.attributes = (prev?.attributes ?? [:])
+        curr.inSelectionAttributes = (prev?.inSelectionAttributes ?? [:])
+        curr.outSelectionAttributes = (prev?.outSelectionAttributes ?? [:])
         for attr in setting.attributes {
             curr.attributes[attr.key] = attr
+        }
+        for attr in setting.inSelectionAttributes {
+            curr.inSelectionAttributes[attr.key] = attr
+        }
+        for attr in setting.outSelectionAttributes {
+            curr.outSelectionAttributes[attr.key] = attr
         }
         
         if setting.parentScopes.count > 0 {
@@ -83,7 +111,7 @@ public class Theme {
         }
     }
     
-    public func attributes(forScope scope: String) -> [ThemeAttribute] {
+    public func allAttributes(forScope scope: String) -> ([ThemeAttribute], [ThemeAttribute], [ThemeAttribute]) {
         var curr = root
         for comp in scope.split(separator: ".") {
             if let child = curr.children[String(comp)] {
@@ -93,6 +121,6 @@ public class Theme {
                 break
             }
         }
-        return Array(curr.attributes.values)
+        return (Array(curr.attributes.values), Array(curr.inSelectionAttributes.values), Array(curr.outSelectionAttributes.values))
     }
 }

@@ -14,5 +14,5 @@ import Foundation
 /// Paragraph styles will prioritise the theme attributes of narrower scopes and later tokens for a line.
 public protocol LineThemeAttribute: ThemeAttribute {
     
-    func apply(to style: MutableParagraphStyle, inSelectionScope: Bool)
+    func apply(to style: MutableParagraphStyle)
 }

@@ -20,11 +20,11 @@ public class EditorTextStorage: NSTextStorage {
     
     private var lineRanges: [NSRange]
     
-    var lineStartLocs: [Int] {
+    private var lineStartLocs: [Int] {
         return lineRanges.map {$0.location}
     }
     
-    var nContentLines: Int {
+    private var nContentLines: Int {
         return lineRanges.count - (lineRanges.last!.length == 0 ? 1 : 0)
     }
     
@@ -41,6 +41,8 @@ public class EditorTextStorage: NSTextStorage {
     public var isProcessingEditing: Bool {
         _isProcessingEditing
     }
+    
+    var selectionLines = Set<Int>()
     
     init(grammar: Grammar, theme: Theme) {
         storage = NSMutableAttributedString(string: "", attributes: nil)
@@ -370,8 +372,6 @@ public class EditorTextStorage: NSTextStorage {
         edited(.editedAttributes, range: fullRange, changeInLength: 0)
     }
     
-    var selectionLines = Set<Int>()
-    
     public func updateSelectedRanges(_ selectedRanges: [NSRange]) {
         // Return if empty
         if string.isEmpty {
@@ -404,11 +404,11 @@ public class EditorTextStorage: NSTextStorage {
             }
             
             if newLines.contains(i) {
-                tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: true)
+                tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: true, applyBaseAttributes: false)
                 rangesChanged.append(NSRange(location: lineLoc, length: tokenizedLine.length))
             }
             if removedLines.contains(i) {
-                tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: false)
+                tokenizedLine.applyTheme(storage, at: lineLoc, inSelectionScope: false, applyBaseAttributes: false)
                 rangesChanged.append(NSRange(location: lineLoc, length: tokenizedLine.length))
             }
             
@@ -416,7 +416,6 @@ public class EditorTextStorage: NSTextStorage {
         }
         
         for rangeChanged in rangesChanged {
-            fixAttributes(in: rangeChanged)
             layoutManagers.forEach { manager in
                 manager.processEditing(for: self, edited: .editedAttributes, range: rangeChanged, changeInLength: 0, invalidatedRange: rangeChanged)
             }

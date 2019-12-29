@@ -23,7 +23,7 @@ public class ActionThemeAttribute: TokenThemeAttribute {
         self.handler = handler
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.link, value: actionId, range: range)
         if let handler = handler {
             attrStr.addAttribute(Self.HandlerKey, value: handler, range: range)

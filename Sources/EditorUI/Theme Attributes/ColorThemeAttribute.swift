@@ -12,17 +12,12 @@ public class ColorThemeAttribute: TokenThemeAttribute {
     
     public let key = "color"
     public let color: Color
-    public let altColor: Color?
     
-    public init(color: Color, inSelectionScopeColor: Color? = nil) {
+    public init(color: Color) {
         self.color = color
-        self.altColor = inSelectionScopeColor
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.foregroundColor, value: color, range: range)
-        if inSelectionScope == true, let altColor = altColor {
-            attrStr.addAttribute(.foregroundColor, value: altColor, range: range)
-        }
     }
 }

@@ -44,24 +44,66 @@ public class TokenizedLine {
         tokens[tokens.count - 1].range.length += len
     }
     
-    public func applyTheme(_ attributedString: NSMutableAttributedString, at loc: Int, inSelectionScope: Bool = false) {
-        let style = MutableParagraphStyle()
+    private static func applyThemeAttributes(_ attributes: [ThemeAttribute], toStr attributedString: NSMutableAttributedString, withStyle style: MutableParagraphStyle, andRange range: NSRange) {
+        for attr in attributes {
+            if let lineAttr = attr as? LineThemeAttribute {
+                lineAttr.apply(to: style)
+            }
+            else if let tokenAttr = attr as? TokenThemeAttribute {
+                tokenAttr.apply(to: attributedString, withRange: range)
+            }
+            else {
+                print("Warning: ThemeAttribute with key \(attr.key) does not conform to either LineThemeAttribute or TokenThemeAttribtue so it will not be applied.")
+            }
+        }
+    }
+    
+    ///
+    /// Applies the theming of the tokenized line to a given mutable attributed string at the given location.
+    ///
+    /// - Parameter attributedString: The mutable attributed string to apply the attributes to.
+    /// - Parameter loc: The (NSString indexed) location to apply the theming from.
+    /// - Parameter inSelectedScope: Whether the current selection is on any part of the line that is being themed.
+    /// - Parameter applyBaseAttributes: Whether the base should be applied as well selection scope attributes.
+    ///
+    public func applyTheme(
+        _ attributedString: NSMutableAttributedString,
+        at loc: Int,
+        inSelectionScope: Bool = false,
+        applyBaseAttributes: Bool = true
+    ) {
         
-        attributedString.setAttributes(nil, range: NSRange(location: loc, length: length))
+        // If we are applying the base attributes we will reset the attributes of the attributed string. Otherwise, we will leave them and create a mutable copy of the paragraph style.
+        var style = MutableParagraphStyle()
+        if applyBaseAttributes {
+            attributedString.setAttributes(nil, range: NSRange(location: loc, length: length))
+        }
+        else if let currStyle = (attributedString.attribute(.paragraphStyle, at: loc, effectiveRange: nil) as? ParagraphStyle)?.mutableCopy() as? MutableParagraphStyle {
+            style = currStyle
+        }
         
         for token in tokens {
             for scope in token.scopes {
-                for attr in scope.attributes {
-                    if let lineAttr = attr as? LineThemeAttribute {
-                        lineAttr.apply(to: style, inSelectionScope: inSelectionScope)
-                    }
-                    else if let tokenAttr = attr as? TokenThemeAttribute {
-                        tokenAttr.apply(to: attributedString, withRange: NSRange(location: loc + token.range.location, length: token.range.length), inSelectionScope: inSelectionScope)
-                    }
-                    
-                    else {
-                        print("Warning: ThemeAttribute with key \(attr.key) does not conform to either LineThemeAttribute or TokenThemeAttribtue so it will not be applied.")
-                    }
+                if applyBaseAttributes {
+                    TokenizedLine.applyThemeAttributes(
+                        scope.attributes,
+                        toStr: attributedString,
+                        withStyle: style,
+                        andRange: NSRange(location: loc + token.range.location, length: token.range.length))
+                }
+                if inSelectionScope {
+                    TokenizedLine.applyThemeAttributes(
+                        scope.inSelectionAttributes,
+                        toStr: attributedString,
+                        withStyle: style,
+                        andRange: NSRange(location: loc + token.range.location, length: token.range.length))
+                }
+                else {
+                    TokenizedLine.applyThemeAttributes(
+                        scope.outSelectionAttributes,
+                        toStr: attributedString,
+                        withStyle: style,
+                        andRange: NSRange(location: loc + token.range.location, length: token.range.length))
                 }
             }
         }

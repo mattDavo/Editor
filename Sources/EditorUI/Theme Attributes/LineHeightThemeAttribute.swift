@@ -25,7 +25,7 @@ public class LineHeightThemeAttribute: LineThemeAttribute {
         self.max = max
     }
     
-    public func apply(to style: MutableParagraphStyle, inSelectionScope: Bool) {
+    public func apply(to style: MutableParagraphStyle) {
         style.minimumLineHeight = min
         style.maximumLineHeight = max
     }

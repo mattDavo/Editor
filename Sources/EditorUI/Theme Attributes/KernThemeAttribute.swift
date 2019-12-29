@@ -17,7 +17,7 @@ public class KernThemeAttribute: TokenThemeAttribute {
         self.kern = kern
     }
     
-    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange, inSelectionScope: Bool) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.kern, value: kern, range: range)
     }
 }
