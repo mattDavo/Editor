@@ -122,7 +122,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
 ##### EditorUI
 - [ ] Clickable/tappable tokens with handlers
 - [ ] Token replacements, take a token and replace the text.
-- [ ] State-conditional formatting: based on the position of the cursor
+- [x] State-conditional formatting: based on the position of the cursor
 
 
 ##### All
