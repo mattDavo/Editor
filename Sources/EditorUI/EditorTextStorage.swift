@@ -24,11 +24,13 @@ public class EditorTextStorage: NSTextStorage {
         return lineRanges.map {$0.location}
     }
     
+    var nContentLines: Int {
+        return lineRanges.count - (lineRanges.last!.length == 0 ? 1 : 0)
+    }
+    
     private var states = [LineState?]()
     
     private var tokenizedLines = [TokenizedLine?]()
-    
-    public var lastInvalidatedRange = NSRange(location: 0, length: 0)
     
     private var grammar: Grammar
     
@@ -79,7 +81,7 @@ public class EditorTextStorage: NSTextStorage {
         updateLineRanges(forCharactersReplacedInRange: range, with: str)
         
         // Check the line ranges in testing
-        checkLineRanges()
+//        checkLineRanges()
         
         edited(.editedCharacters, range: range, changeInLength: (str as NSString).length - range.length)
         endEditing()
@@ -158,32 +160,6 @@ public class EditorTextStorage: NSTextStorage {
         endEditing()
     }
     
-    ///
-    /// Splits the string into lines including the newline character at the end of each of line.
-    ///
-    /// - Parameter string: The string to split into lines.
-    /// - Returns: The string split into an array of newline containing lines.
-    /// - Note: if the document ends with a newline character despite the document being rendered as having an extra (empty) line, this is not actually so and is just rendered like this for a better UX. This 'fake' line will not be included in the return value.
-    ///
-    private func getLines(string: String) -> [String] {
-        // Split into lines with each line
-        var lines = string.split(separator: "\n", omittingEmptySubsequences: false).map({String($0 + "\n")})
-        // Note: even if the string is empty, lines will always have 1 element.
-        // Remove the extra newline on the last line.
-        lines[lines.count-1].removeLast()
-        // Remove the last line if it is empty. Note: whilst text editors will render this last line like it is a line it technically doesn't exist, as really the newline is just part of the previous line.
-        if lines.last!.isEmpty {
-            lines.removeLast()
-        }
-        
-        // Check the lines array is what we would expect.
-        guard string.count == lines.reduce(0, {$0 + $1.count}) else {
-            fatalError("Incorrect lines array")
-        }
-        
-        return lines
-    }
-    
     private func getEditedLines(lineStartLocs: [Int], editedRange: NSRange) -> (Int, Int) {
         var first = 0
         while first < lineStartLocs.count - 1 {
@@ -205,107 +181,55 @@ public class EditorTextStorage: NSTextStorage {
         return (first, last)
     }
     
-    private func getEditedLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
-        var firstEditedLine = 0
-        var location = 0
-        while firstEditedLine < lines.count {
-            if editedRange.location < location + lines[firstEditedLine].utf16.count {
-                break
-            }
-            location += lines[firstEditedLine].utf16.count
-            firstEditedLine += 1
-        }
-        
-        // We figure out the last line that was edited.
-        var lastEditedLine = firstEditedLine
-        while lastEditedLine < lines.count {
-            if editedRange.upperBound <= location + lines[lastEditedLine].utf16.count {
-                break
-            }
-            location += lines[lastEditedLine].utf16.count
-            lastEditedLine += 1
-        }
-        
-        firstEditedLine = min(firstEditedLine, lines.count - 1)
-        lastEditedLine = min(lastEditedLine, lines.count - 1)
-        
-        return (firstEditedLine, lastEditedLine)
-    }
-    
     ///
-    /// Gets the lines that need to be processed at a minimum.
+    /// Gets the last line that need to be processed at a minimum given the last edited line.
     ///
-    /// For typing edits this will normal just return that 1 or 2 lines. Paste edits will be able to return much larger ranges of lines.
-    ///
-    /// - Parameter lines: The lines to determine which need to be processed.
+    /// - Parameter lastEditedLine: The index of the last edited line.
     /// - Parameter editedRange: The range of characters which have been edited.
-    /// - Returns: A tuple of the first line that needs to be processed and the last line that needs to be processed.
+    /// - Returns: The last line that needs to be processed at a minimum.
     ///
-    private func getProcessingLines(lines: [String], editedRange: NSRange) -> (Int, Int) {
-        // We figure out the first and last lines that were edited.
-        var (firstEditedLine, lastEditedLine) = getEditedLines(lines: lines, editedRange: editedRange)
-        
+    private func getLastProcessingLine(lastEditedLine: Int, editedRange: NSRange, text: String) -> Int {
         // We add 1 to the last edited line if a newline was the last character of the edit to extend the edited range to enforce checking the new line as well.
-        let text = lines.joined()
         // Take the last edited utf16 character in the range. Since NSRanges are based on utf16 characters.
         let u16Last = text.utf16.index(text.utf16.startIndex, offsetBy: max(editedRange.upperBound - 1, 0))
         // Find it's unicode position, and see if it is a newline
         if let uLast = u16Last.samePosition(in: text.unicodeScalars) {
             if text[uLast] == "\n" {
-                lastEditedLine += 1
+                return lastEditedLine + 1
             }
         }
         
-        // Cap the lines incase the position is at the end of the document, which is technically after the last line.
-        firstEditedLine = min(firstEditedLine, lines.count - 1)
-        lastEditedLine = min(lastEditedLine, lines.count - 1)
-        
-        return (firstEditedLine, lastEditedLine)
+        return lastEditedLine
     }
     
     ///
-    /// Modifies the length of the states array based on the first edited line to prepare for the processing based of the previous states.
+    /// Modifies the length of the states and tokenized lines array based on the first edited line to prepare for the processing based of the previous states.
     ///
     /// - Parameter firstEditedLine: The first line that was edited.
     /// - Parameter changeInLines: The number of lines added or deleted.
     ///
-    private func adjustStates(firstEditedLine: Int, changeInLines: Int) {
-        for _ in 0..<abs(changeInLines) {
-            if changeInLines < 0 {
+    private func adjustCache(firstEditedLine: Int, changeInLines: Int) {
+        if changeInLines < 0 {
+            for _ in 0..<abs(changeInLines) {
                 states.remove(at: firstEditedLine + 1)
-            }
-            else {
-                states.insert(nil, at: firstEditedLine + 1)
-            }
-        }
-    }
-    
-    ///
-    /// Modifies the length of the tokenized lines array based on the first edited line to prepare for the processing based of the previous states.
-    ///
-    /// - Parameter firstEditedLine: The first line that was edited.
-    /// - Parameter changeInLines: The number of lines added or deleted.
-    ///
-    private func adjustTokenizedLines(firstEditedLine: Int, changeInLines: Int) {
-        for _ in 0..<abs(changeInLines) {
-            if changeInLines < 0 {
                 tokenizedLines.remove(at: firstEditedLine)
             }
-            else {
+        }
+        else {
+            for _ in 0..<abs(changeInLines) {
+                states.insert(nil, at: firstEditedLine + 1)
                 tokenizedLines.insert(nil, at: firstEditedLine)
             }
         }
     }
     
-    private func getCursorLine(lines: [String], editedRange: NSRange) -> Int {
+    private func getCursorLine(lineRanges: [NSRange], editedRange: NSRange) -> Int {
         // We figure out line the cursor will be on
-        var location = 0
         var cursorLine = 0
-        while cursorLine < lines.count {
-            if editedRange.upperBound < location + lines[cursorLine].utf16.count {
+        while cursorLine < lineRanges.count {
+            if editedRange.upperBound < lineRanges[cursorLine].upperBound {
                 break
             }
-            location += lines[cursorLine].utf16.count
             cursorLine += 1
         }
         
@@ -324,24 +248,25 @@ public class EditorTextStorage: NSTextStorage {
             return (fullRange, fullRange)
         }
         
-        // Split the string into lines.
-        let lines = getLines(string: string)
+        // Get the number of content lines.
+        let nContentLines = self.nContentLines
         
         // Default the processing lines to the entire document.
-        var processingLines = (first: 0, last: lines.count-1)
+        var processingLines = (first: 0, last: nContentLines-1)
         
         // Calculate the change in number of lines and adjust the states array
-        let change = lines.count - states.count + 1
+        let change = nContentLines - states.count + 1
         
         // If we have cached states for the lines we do not need to process the entire string, we can simply on process the lines that have changed or lines afterwards that have been affected by the change.
         if !states.isEmpty && !tokenizedLines.isEmpty {
-            processingLines = getProcessingLines(lines: lines, editedRange: editedRange)
-            adjustStates(firstEditedLine: processingLines.first, changeInLines: change)
-            adjustTokenizedLines(firstEditedLine: processingLines.first, changeInLines: change)
+            processingLines = getEditedLines(lineStartLocs: lineStartLocs, editedRange: editedRange)
+            processingLines.last = getLastProcessingLine(lastEditedLine: processingLines.last, editedRange: editedRange, text: storage.string)
+            processingLines.last = min(processingLines.last, nContentLines-1)
+            adjustCache(firstEditedLine: processingLines.first, changeInLines: change)
         }
         else {
             // Either both caches are empty or the cache is in an inconsistent state, either way, init both
-            tokenizedLines = .init(repeating: nil, count: lines.count)
+            tokenizedLines = .init(repeating: nil, count: nContentLines)
             states = [grammar.createFirstLineState(theme: theme)]
         }
         
@@ -354,16 +279,17 @@ public class EditorTextStorage: NSTextStorage {
             }
             
             // Tokenize the line
-            let tokenizedLine = grammar.tokenize(line: lines[processingLine], state: state, withTheme: theme)
+            let line = (storage.string as NSString).substring(with: lineRanges[processingLine])
+            let tokenizedLine = grammar.tokenize(line: line, state: state, withTheme: theme)
             tokenizedLines.append(tokenizedLine)
             
             self.tokenizedLines[processingLine] = tokenizedLine
             
             // See if the state (for the next line) was previously cached
             if processingLine + 1 < states.count {
-                // Check if we're on the last line and the state is different to the cache
-                // If so we need to keep caching
-                if processingLine < lines.count - 1 && processingLine == processingLines.last && tokenizedLine.state != states[processingLine + 1] {
+                // Check if we're not on the last line of the text, but on the last line of the processing lines and the state is different to the cache.
+                // If so we need to keep caching by extending the processing lines.
+                if processingLine < nContentLines - 1 && processingLine == processingLines.last && tokenizedLine.state != states[processingLine + 1] {
                     processingLines.last += 1
                 }
                 states[processingLine + 1] = tokenizedLine.state
@@ -377,22 +303,21 @@ public class EditorTextStorage: NSTextStorage {
             processingLine += 1
         }
         
-        // Get the line of the cursor (sort of). TODO: Fix. Not always correct. Processing lines are also not always correct, sometimes processing an extra line.
-        let cursorLine = getCursorLine(lines: lines, editedRange: editedRange)
-        if cursorLine < lines.count {
+        // Update the line of the cursor.
+        let cursorLine = getCursorLine(lineRanges: lineRanges, editedRange: editedRange)
+        if cursorLine < nContentLines {
             selectionLines.removeAll()
             selectionLines.insert(cursorLine)
         }
         
-        let startOfProcessing = lines[0..<processingLines.first].reduce(0, {$0 + $1.utf16.count})
+        let startOfProcessing = lineRanges[processingLines.first].location
+        let processingLength = lineRanges[processingLines.last].upperBound - startOfProcessing
         
-        var lineLoc = startOfProcessing
         tokenizedLines.enumerated().forEach {
-            $1.applyTheme(storage, at: lineLoc, inSelectionScope: $0 + processingLines.first == cursorLine)
-            lineLoc += $1.length
+            $1.applyTheme(storage, at: lineRanges[$0 + processingLines.first].location, inSelectionScope: $0 + processingLines.first == cursorLine)
         }
         
-        let processedRange = NSRange(location: startOfProcessing, length: lineLoc - startOfProcessing)
+        let processedRange = NSRange(location: startOfProcessing, length: processingLength)
         
         // Important for fixing fonts where the font does not contain the glyph in the text, e.g. emojis.
         fixAttributes(in: processedRange)
@@ -401,7 +326,7 @@ public class EditorTextStorage: NSTextStorage {
         
         let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
         
-        guard !self.tokenizedLines.contains(where: {$0==nil}) && self.tokenizedLines.count == lines.count else {
+        guard !self.tokenizedLines.contains(where: {$0==nil}) && self.tokenizedLines.count == nContentLines else {
             fatalError("Failed to cache tokenized lines correctly")
         }
         
@@ -432,8 +357,6 @@ public class EditorTextStorage: NSTextStorage {
         print("Range invalidated: \(invalidatedRange)")
         print()
         print("Line start locs.count: \(lineStartLocs.count)")
-        
-        self.lastInvalidatedRange = invalidatedRange
         
         layoutManagers.forEach { manager in
             manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: invalidatedRange)
