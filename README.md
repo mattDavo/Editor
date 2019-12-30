@@ -116,7 +116,6 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
 ##### EditorCore
 - [ ] Captures for `BeginEndRule`
 - [ ] Folding stop and start markers
-- [ ] `IncludeLanguagePattern`
 - [ ] Parent scopes for `ThemeSetting`s
 - [ ] Refactor `Rule` matching into the `protocol`
 
