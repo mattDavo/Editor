@@ -51,9 +51,8 @@ Types of Patterns:
 - `BeginEndRule`: Has a begin regex and end regex, can span multiple lines and can have patterns to apply in between. Usef for patterns like multi-line comments. 
 - `IncludeRulePattern`: Refernces a pattern in the repository.
 - `IncludeGrammarPattern`: Includes the base rules of the grammar with a given scope name.
-- `IncludeLanguagePattern`: Reference another language grammar. **NOT YET IMPLEMENTED**
 
-Now whilst there are 5 different patterns, they will all resolve to one or more Rules, and you may have guessed there are actually only two types of rules: `MatchRule` and `BeginEndRule`.
+Now whilst there are 4 different patterns, they will all resolve to one or more Rules, and you may have guessed there are actually only two types of rules: `MatchRule` and `BeginEndRule`.
 
 ### `MatchRule`
 Match a regex on single line of text. Examples:
