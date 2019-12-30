@@ -27,5 +27,5 @@ public protocol Pattern {
     /// - parameter grammar: The grammar that is resolving the pattern into a rule.
     ///
     /// - Important: It is important to note that any patterns with sub patterns should **NOT** resolve them in this method. They will be resolved as needed, doing so could lead to a resolution cycle.
-    func resolve(grammar: Grammar) -> [Rule]
+    func resolve(parser: Parser, grammar: Grammar) -> [Rule]
 }

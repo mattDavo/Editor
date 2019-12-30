@@ -14,7 +14,7 @@ import Foundation
 ///
 /// The capture group that this `Capture` is applied to is determined by its position in its rules' captures array.
 ///
-public class Capture {
+public class Capture: Pattern {
     
     /// Optional scope to apply to the capture.
     var name: String?
@@ -35,13 +35,13 @@ public class Capture {
         self.patterns = patterns
     }
     
-    func resolveRules(grammar: Grammar) -> [Rule] {
+    public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
         if let rules = rules {
             return rules
         }
         var rules = [Rule]()
         for pattern in patterns {
-            rules += pattern.resolve(grammar: grammar)
+            rules += pattern.resolve(parser: parser, grammar: grammar)
         }
         self.rules = rules
         return rules

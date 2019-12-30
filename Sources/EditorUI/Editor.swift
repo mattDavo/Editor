@@ -15,6 +15,8 @@ public class Editor: NSObject {
     
     let textView: EditorTextView
     
+    let parser: Parser
+    
     let grammar: Grammar
     
     let theme: Theme
@@ -24,21 +26,23 @@ public class Editor: NSObject {
     ///   A testing seam. Defaults to `NotificationCenter.default`.
     public init(
         textView: EditorTextView,
-        grammar: Grammar,
+        parser: Parser,
+        baseGrammar: Grammar,
         theme: Theme,
         notificationCenter: NotificationCenter = .default)
     {
         self.textView = textView
-        self.grammar = grammar
+        self.parser = parser
+        self.grammar = baseGrammar
         self.theme = theme
         super.init()
         
         textView.delegate = self
         textView.layoutManager?.delegate = self
-        textView.replace(grammar: grammar, theme: theme)
+        textView.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
         textView.textContainerInset = NSSize(width: 20, height: 20)
         // Set the type attributes to base scope. This is important for the line height of the empty final line in the document and the look of an initially empty document.
-        textView.typingAttributes = grammar.baseAttributes(forTheme: theme)
+        textView.typingAttributes = baseGrammar.baseAttributes(forTheme: theme)
         didHighlightSyntax(textView: textView)
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)

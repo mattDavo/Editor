@@ -31,7 +31,7 @@ public class MatchRule: Rule, Pattern {
         self.captures = captures
     }
     
-    public func resolve(grammar: Grammar) -> [Rule] {
+    public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
         return [self]
     }
 }

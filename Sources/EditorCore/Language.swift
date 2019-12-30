@@ -11,6 +11,6 @@ struct Language {
     var grammar: Grammar
     
     func tokenize(lines: [String]) {
-        grammar.tokenize(lines: lines)
+//        grammar.tokenize(lines: lines)
     }
 }

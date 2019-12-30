@@ -39,7 +39,7 @@ let readMeExampleGrammar = Grammar(
             end: "\"",
             patterns: [
                 MatchRule(name: "source.example", match: #"\\\(.*\)"#, captures: [
-                    Capture(patterns: [IncludeGrammarPattern()])
+                    Capture(patterns: [IncludeGrammarPattern(scopeName: "source.example")])
                 ])
             ]
         ),
@@ -88,6 +88,7 @@ class ViewController: NSViewController {
 
     @IBOutlet var textView: EditorTextView!
     var editor: Editor!
+    var parser: Parser!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -95,7 +96,8 @@ class ViewController: NSViewController {
         textView.insertionPointColor = .systemBlue
         textView.replace(lineNumberGutter: LineNumberGutter(withTextView: textView))
         
-        editor = Editor(textView: textView, grammar: readMeExampleGrammar, theme: readMeExampleTheme)
+        parser = Parser(grammars: [readMeExampleGrammar])
+        editor = Editor(textView: textView, parser: parser, baseGrammar: readMeExampleGrammar, theme: exampleTheme)
     }
 }
 ```
@@ -128,6 +130,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
 ##### All
 - [ ] Subscribe to tokens, changes
 - [ ] Auto-completion and suggestions
+- [ ] Smarter auto-indent, based on scope to determine depth of indent.
 
 ##### Optimization of Syntax Highlighting
 - [ ] `EditorTextStorage: NSTextStorage`

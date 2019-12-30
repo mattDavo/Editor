@@ -8,12 +8,6 @@
 import Foundation
 import EditorCore
 
-#if os(iOS)
-import UIKit
-#elseif os(macOS)
-import Cocoa
-#endif
-
 public class ParagraphSpacingAfterThemeAttribute: LineThemeAttribute {
     
     public let key = "para-spacing-after"

@@ -32,6 +32,8 @@ public class EditorTextStorage: NSTextStorage {
     
     private var tokenizedLines = [TokenizedLine?]()
     
+    private var parser: Parser
+    
     private var grammar: Grammar
     
     private var theme: Theme
@@ -44,10 +46,11 @@ public class EditorTextStorage: NSTextStorage {
     
     var selectionLines = Set<Int>()
     
-    init(grammar: Grammar, theme: Theme) {
+    init(parser: Parser, baseGrammar: Grammar, theme: Theme) {
         storage = NSMutableAttributedString(string: "", attributes: nil)
         self.lineRanges = [NSRange(location: 0, length: 0)]
-        self.grammar = grammar
+        self.parser = parser
+        self.grammar = baseGrammar
         self.theme = theme
         super.init()
     }
@@ -225,6 +228,35 @@ public class EditorTextStorage: NSTextStorage {
         }
     }
     
+    public func getLocationLine(_ loc: Int) -> Int {
+        var line = 0
+        while line < lineRanges.count {
+            if loc < lineRanges[line].upperBound {
+                break
+            }
+            line += 1
+        }
+        
+        return line
+    }
+    
+    public func getLine(_ i: Int) -> String {
+        return (string as NSString).substring(with: lineRanges[i])
+    }
+    
+    public func getLocationOnLine(_ loc: Int) -> Int {
+        let line = getLocationLine(loc)
+        
+        return loc - lineRanges[line].location
+    }
+    
+    public func getLineRange(_ line: Int) -> NSRange? {
+        guard line >= 0 && line < lineRanges.count else {
+            return nil
+        }
+        return lineRanges[line]
+    }
+    
     private func getCursorLine(lineRanges: [NSRange], editedRange: NSRange) -> Int {
         // We figure out line the cursor will be on
         var cursorLine = 0
@@ -282,7 +314,7 @@ public class EditorTextStorage: NSTextStorage {
             
             // Tokenize the line
             let line = (storage.string as NSString).substring(with: lineRanges[processingLine])
-            let tokenizedLine = grammar.tokenize(line: line, state: state, withTheme: theme)
+            let tokenizedLine = parser.tokenize(grammar, line: line, state: state, withTheme: theme)
             tokenizedLines.append(tokenizedLine)
             
             self.tokenizedLines[processingLine] = tokenizedLine
@@ -365,8 +397,9 @@ public class EditorTextStorage: NSTextStorage {
         }
     }
     
-    public func replace(grammar: Grammar, theme: Theme) {
-        self.grammar = grammar
+    public func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
+        self.parser = parser
+        self.grammar = baseGrammar
         self.theme = theme
         states = []
         edited(.editedAttributes, range: fullRange, changeInLength: 0)

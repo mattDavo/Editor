@@ -64,17 +64,17 @@ public class BeginEndRule: Rule, Pattern {
         self.endCaptures = endCaptures
     }
     
-    public func resolve(grammar: Grammar) -> [Rule] {
+    public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
         return [self]
     }
     
-    func resolveRules(grammar: Grammar) -> [Rule] {
+    func resolveRules(parser: Parser, grammar: Grammar) -> [Rule] {
         if let rules = rules {
             return rules
         }
         var rules = [Rule]()
         for pattern in patterns {
-            rules += pattern.resolve(grammar: grammar)
+            rules += pattern.resolve(parser: parser, grammar: grammar)
         }
         self.rules = rules
         return rules

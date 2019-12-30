@@ -15,7 +15,7 @@ public class IncludeRulePattern: Pattern {
         self.include = include
     }
     
-    public func resolve(grammar: Grammar) -> [Rule] {
+    public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
         guard let repo = grammar.repository else {
             print("Warning: Failed to resolve include rule with value: \(include) because grammar repository is nil.")
             return []
@@ -24,6 +24,6 @@ public class IncludeRulePattern: Pattern {
             print("Warning: Failed to resolve include rule with value: \(include) because the grammar repository does not contain a pattern with name: \(include)")
             return []
         }
-        return rule.resolve(grammar: grammar)
+        return rule.resolve(parser: parser, grammar: grammar)
     }
 }

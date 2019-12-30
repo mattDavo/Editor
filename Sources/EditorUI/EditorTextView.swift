@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  EditorTextView.swift
 //  
 //
 //  Created by Matthew Davidson on 5/12/19.
@@ -34,6 +34,7 @@ public class EditorTextView: NSTextView {
         }
     }
     
+    private var _parser: Parser = Parser(grammars: [.default])
     private var _grammar: Grammar = .default
     private var _theme: Theme = .default
     
@@ -43,6 +44,10 @@ public class EditorTextView: NSTextView {
     
     public var theme: Theme {
         return _theme
+    }
+    
+    public var parser: Parser {
+        return _parser
     }
     
     /// Holds the attached line number gutter.
@@ -84,6 +89,15 @@ public class EditorTextView: NSTextView {
         }
     }
     
+    /// Boolean value to determine whether tabs should be instead indented with spaces. The number of spaces is determined by `tabWidth`.
+    public var indentUsingSpaces = true
+    
+    /// If `indentUsingSpaces` is `true` it defines the number of spaces that should be inserted for a tab. If `indentUsingSpaces` is `false` this value will not be used and controlling the width of tabs should be done by setting the `tabStops` and `defaultTabInterval` values of the `NSParagraphStyle` NSAttributedString attribute.
+    public var tabWidth = 4
+    
+    /// Boolean value to determine whether the indentation pattern of the current line should be followed on the insertion of a new line.
+    public var autoIndent = true
+    
     
     // MARK: - Constructors
     
@@ -112,7 +126,7 @@ public class EditorTextView: NSTextView {
         layoutManager = manager
         
         // Insert NSTextStorage subclass
-        let storage = EditorTextStorage(grammar: grammar, theme: theme)
+        let storage = EditorTextStorage(parser: parser, baseGrammar: grammar, theme: theme)
         storage.append(attributedString())
         layoutManager?.replaceTextStorage(storage)
         
@@ -154,14 +168,15 @@ public class EditorTextView: NSTextView {
         }
     }
     
-    public func replace(grammar: Grammar, theme: Theme) {
-        _grammar = grammar
+    public func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
+        _parser = parser
+        _grammar = baseGrammar
         _theme = theme
         guard let storage = textStorage as? EditorTextStorage else {
             print("Cannot set grammar and them on text storage because it is not of type EditorTextStorage")
             return
         }
-        storage.replace(grammar: grammar, theme: theme)
+        storage.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
     }
     
     func boundingRect(forCharacterRange range: NSRange) -> CGRect? {
@@ -187,6 +202,39 @@ public class EditorTextView: NSTextView {
         var rect = rect
         rect.size.width += caretSize - 1
         super.setNeedsDisplay(rect, avoidAdditionalLayout: flag)
+    }
+    
+    public override func insertTab(_ sender: Any?) {
+        if indentUsingSpaces && tabWidth > 0, let storage = textStorage as? EditorTextStorage {
+            // Get location into the line
+            let lineLoc = storage.getLocationOnLine(selectedRange().location)
+            // Get spaces that make up the rest of the tab
+            let width = tabWidth - lineLoc%tabWidth
+            
+            insertText(String(repeating: " ", count: width), replacementRange: selectedRange())
+        }
+        else {
+            insertText("\t", replacementRange: selectedRange())
+        }
+    }
+    
+    public override func insertNewline(_ sender: Any?) {
+        if autoIndent, let storage = textStorage as? EditorTextStorage {
+            let lineNo = storage.getLocationLine(selectedRange().location)
+            let line = storage.getLine(lineNo) as NSString
+            
+            var spaces = 0
+            var loc = 0
+            while line.substring(with: NSRange(location: loc, length: 1)) == " " {
+                spaces += 1
+                loc += 1
+            }
+            
+            insertText("\n\(String(repeating: " ", count: spaces))", replacementRange: selectedRange())
+        }
+        else {
+            super.insertNewline(sender)
+        }
     }
 }
 

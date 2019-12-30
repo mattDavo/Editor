@@ -9,9 +9,23 @@ import Foundation
 
 public class IncludeGrammarPattern: Pattern {
     
-    public init() {}
+    let scopeName: String
     
-    public func resolve(grammar: Grammar) -> [Rule] {
-        return grammar.rules
+    ///
+    /// Includes a grammar identified by its scope name.
+    ///
+    /// - Parameter scopeName: The base scope name of the grammar.
+    ///
+    public init(scopeName: String) {
+        self.scopeName = scopeName
+    }
+    
+    public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
+        if let grammar = parser.grammar(withScope: scopeName) {
+            return grammar.rules
+        }
+        else {
+            fatalError("Warning: There is no grammar in the parser with the scope name: '\(scopeName)'")
+        }
     }
 }
