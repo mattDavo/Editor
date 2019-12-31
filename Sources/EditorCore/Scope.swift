@@ -8,7 +8,7 @@
 import Foundation
 
 class Scope {
-    var name: String
+    var name: ScopeName
     var rules: [Rule]
     var end: NSRegularExpression?
     var attributes: [ThemeAttribute]
@@ -17,7 +17,7 @@ class Scope {
     var isContentScope = false
     
     init(
-        name: String,
+        name: ScopeName,
         rules: [Rule],
         end: NSRegularExpression? = nil,
         attributes: [ThemeAttribute],
@@ -35,7 +35,7 @@ class Scope {
     }
     
     init(
-        name: String,
+        name: ScopeName,
         rules: [Rule],
         end: NSRegularExpression? = nil,
         theme: Theme,
@@ -44,7 +44,7 @@ class Scope {
         self.name = name
         self.rules = rules
         self.end = end
-        (self.attributes, self.inSelectionAttributes, self.outSelectionAttributes) = theme.allAttributes(forScope: name)
+        (self.attributes, self.inSelectionAttributes, self.outSelectionAttributes) = theme.allAttributes(forScopeName: name)
         self.isContentScope = isContentScope
     }
 }

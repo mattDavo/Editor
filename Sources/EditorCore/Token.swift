@@ -10,7 +10,7 @@ import Foundation
 public struct Token {
     var range: NSRange
     var scopes: [Scope]
-    var scopeNames: [String] {
+    var scopeNames: [ScopeName] {
         return scopes.map({$0.name})
     }
     

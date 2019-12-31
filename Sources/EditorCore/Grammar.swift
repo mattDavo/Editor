@@ -61,7 +61,7 @@ public class Grammar {
     public func createFirstLineState(theme: Theme = .default) -> LineState {
         return LineState(scopes: [
             Scope(
-                name: scopeName,
+                name: ScopeName(rawValue: scopeName),
                 rules: rules,
                 end: nil,
                 theme: theme
@@ -75,7 +75,7 @@ public class Grammar {
                 range: NSRange(location: 0, length: 1),
                 scopes: [
                     Scope(
-                        name: scopeName,
+                        name: ScopeName(rawValue: scopeName),
                         rules: [],
                         theme: theme
                     )

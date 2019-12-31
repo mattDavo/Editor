@@ -111,9 +111,9 @@ public class Theme {
         }
     }
     
-    public func allAttributes(forScope scope: String) -> ([ThemeAttribute], [ThemeAttribute], [ThemeAttribute]) {
+    public func allAttributes(forScopeName scopeName: ScopeName) -> ([ThemeAttribute], [ThemeAttribute], [ThemeAttribute]) {
         var curr = root
-        for comp in scope.split(separator: ".") {
+        for comp in scopeName.components {
             if let child = curr.children[String(comp)] {
                 curr = child
             }

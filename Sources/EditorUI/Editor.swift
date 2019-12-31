@@ -59,6 +59,21 @@ public class Editor: NSObject {
             return
         }
         
+        // Layout the view for the invalidated visible range.
+        // Get the visible range
+        let visibleRange = layoutManager.glyphRange(forBoundingRect: textView.visibleRect, in: textContainer)
+        // Get the intersection of the invalidated range and visible range.
+        // If there is no intersection, no display needed.
+        if let visibleInvalid = visibleRange.intersection(storage.lastInvalidatedRange) {
+            // Try to get the bounding rect of the invalid range and only re-render it, otherwise re-render the entire text view.
+            if let rect = textView.boundingRect(forCharacterRange: visibleInvalid) {
+                textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
+            }
+            else {
+                textView.needsDisplay = true
+            }
+        }
+        
         // Check EOF
         if !storage.string.isEmpty && storage.string.last != "\n" {
             let prev = textView.selectedRanges
@@ -88,13 +103,30 @@ extension Editor: NSTextViewDelegate {
     }
     
     public func textViewDidChangeSelection(_ notification: Notification) {
-        guard let textView = notification.object as? NSTextView,
+        guard let textView = notification.object as? EditorTextView,
             let storage = textView.textStorage as? EditorTextStorage else {
             return
         }
         
         if !storage.isProcessingEditing {
-            storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue})
+            var rangesChanged = storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue})
+            
+            // If there are any lines that changed
+            if !rangesChanged.isEmpty {
+                // Union all of the ranges
+                let first = rangesChanged.removeFirst()
+                let totalChange = rangesChanged.reduce(first, {
+                    return $0.union($1)
+                })
+                
+                // And re-display. This is important for rounded highlighting for full lines to ensure that rounding is not applied in the middle.
+                if let rect = textView.boundingRect(forCharacterRange: totalChange) {
+                    textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
+                }
+                else {
+                    textView.needsDisplay = true
+                }
+            }
         }
     }
 }

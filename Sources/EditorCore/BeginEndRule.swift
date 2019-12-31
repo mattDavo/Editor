@@ -15,7 +15,7 @@ public class BeginEndRule: Rule, Pattern {
     public let id: UUID
     
     /// The name of the rule, i.e. the scope.
-    var name: String
+    let scopeName: ScopeName
     
     /// The begin regex for the rule.
     ///
@@ -31,7 +31,7 @@ public class BeginEndRule: Rule, Pattern {
     var patterns: [Pattern]
     
     /// The name/scope assigned to text matched between the begin/end patterns.
-    var contentName: String?
+    let contentScopeName: ScopeName?
     
     /// TODO:
     var beginCaptures: [String]
@@ -50,7 +50,7 @@ public class BeginEndRule: Rule, Pattern {
         endCaptures: [String] = []
     ) {
         self.id = UUID()
-        self.name = name
+        self.scopeName = ScopeName(rawValue: name)
         do {
             self.begin = try NSRegularExpression(pattern: begin, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
             self.end = try NSRegularExpression(pattern: end, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
@@ -59,7 +59,12 @@ public class BeginEndRule: Rule, Pattern {
             fatalError("Could not create regex for BeginEndRule with name '\(name)' due to error: \(error.localizedDescription)")
         }
         self.patterns = patterns
-        self.contentName = contentName
+        if let contentName = contentName {
+            self.contentScopeName = ScopeName(rawValue: contentName)
+        }
+        else {
+            self.contentScopeName = nil
+        }
         self.beginCaptures = beginCaptures
         self.endCaptures = endCaptures
     }

@@ -14,7 +14,7 @@ public struct LineState: Equatable {
         return scopes.last
     }
     
-    var scopeNames: [String] {
+    var scopeNames: [ScopeName] {
         return scopes.map({$0.name})
     }
     

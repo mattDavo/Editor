@@ -11,7 +11,7 @@ public class MatchRule: Rule, Pattern {
     
     public let id: UUID
     
-    var name: String
+    let scopeName: ScopeName
     var match: NSRegularExpression
     var captures: [Capture]
     
@@ -21,7 +21,7 @@ public class MatchRule: Rule, Pattern {
         captures: [Capture] = []
     ) {
         self.id = UUID()
-        self.name = name
+        self.scopeName = ScopeName(rawValue: name)
         do {
             self.match = try NSRegularExpression(pattern: match, options: .init(arrayLiteral: .anchorsMatchLines, .dotMatchesLineSeparators))
         }

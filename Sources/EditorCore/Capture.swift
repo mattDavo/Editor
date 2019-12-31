@@ -17,7 +17,7 @@ import Foundation
 public class Capture: Pattern {
     
     /// Optional scope to apply to the capture.
-    var name: String?
+    let scopeName: ScopeName
     
     /// Patterns to apply to the capture.
     var patterns: [Pattern]
@@ -31,7 +31,7 @@ public class Capture: Pattern {
     /// - parameter patterns: Patterns to apply to the capture.
     ///
     public init(name: String? = nil, patterns: [Pattern] = []) {
-        self.name = name
+        self.scopeName = ScopeName(rawValue: name ?? "")
         self.patterns = patterns
     }
     

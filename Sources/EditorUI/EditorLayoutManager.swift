@@ -15,7 +15,10 @@ class EditorLayoutManager: NSLayoutManager {
     
     // Inspiration from : https://instagram-engineering.com/building-type-mode-for-stories-on-ios-and-android-8804e927feba
     override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
-        super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
+        defer {
+            // Call super last to apply normal highlighting with higher priority.
+            super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
+        }
         
         guard let textStorage = textStorage else {
             return
@@ -54,17 +57,50 @@ class EditorLayoutManager: NSLayoutManager {
                 self.fillRoundedBackgroundRectArray(rectArray, count: rectCount, color: roundedBackground.color, cornerRadius: cornerRadius)
             }
             else if roundedBackground.coloringStyle == .line {
-
-                var rect = lineFragmentRect(forGlyphAt: range.location, effectiveRange: nil)
-                let cornerRadius = rect.height * roundedBackground.roundingStyle.rawValue / 2
+                var rect = getBlockRect(forRange: range)
+                let cornerRadius = lineFragmentRect(forGlyphAt: range.location, effectiveRange: nil).height * roundedBackground.roundingStyle.rawValue / 2
                 
                 // Adjust for text container insets
                 rect = rect.offsetBy(dx: origin.x, dy: origin.y)
-                rect = rect.insetBy(dx: -5, dy: 0)
                 
                 self.fillRoundedBackgroundRectArray(rect, color: roundedBackground.color, cornerRadius: cornerRadius)
             }
         })
+    }
+    
+    func getBlockRect(forRange range: NSRange) -> NSRect {
+        var targetRange = range
+        
+        var blockRect: NSRect?
+        
+        // Holder for the effective range
+        var effectiveRange = NSRange(location: NSNotFound, length: 0)
+        while true {
+            let rect = lineFragmentRect(forGlyphAt: targetRange.location, effectiveRange: &effectiveRange)
+            
+            if effectiveRange.location == NSNotFound {
+                fatalError("Failed to retrieve range of textContainer when applying rounded background.")
+            }
+            
+            if blockRect == nil {
+                blockRect = rect
+            }
+            else {
+                blockRect = blockRect!.union(rect)
+            }
+            
+            // Not all of the target range is in this line fragment
+            if targetRange.upperBound > effectiveRange.upperBound {
+                // Update target range and reset effective range
+                targetRange = NSRange(effectiveRange.upperBound..<targetRange.upperBound)
+                effectiveRange = NSRange(location: NSNotFound, length: 0)
+            }
+            // All of the target range is in this text container
+            else {
+                break
+            }
+        }
+        return blockRect!
     }
     
     // Adapted from: https://stackoverflow.com/a/44303971
@@ -134,3 +170,30 @@ class EditorLayoutManager: NSLayoutManager {
 }
 
 #endif
+
+fileprivate extension NSRect {
+    
+    var topLeft: CGPoint {
+        return origin
+    }
+    
+    var topRight: CGPoint {
+        return CGPoint(x: maxX, y: minY)
+    }
+    
+    var bottomRight: CGPoint {
+        return CGPoint(x: maxX, y: maxY)
+    }
+    
+    var bottomLeft: CGPoint {
+        return CGPoint(x: minX, y: maxY)
+    }
+}
+fileprivate extension CGPoint {
+    
+    func shifted(dx: CGFloat, dy: CGFloat) -> CGPoint {
+        return CGPoint(x: x + dx, y: y + dy)
+    }
+}
+
+//extension NSBezierPath

@@ -69,7 +69,7 @@ public class Parser {
                         matched = true
                         // Create a new scope
                         let scope = Scope(
-                            name: rule.name,
+                            name: rule.scopeName,
                             rules: [],
                             theme: theme
                         )
@@ -89,7 +89,7 @@ public class Parser {
                             let capture = rule.captures[i]
                             // Create a scope for the capture.
                             let captureScope = Scope(
-                                name: capture.name ?? "",
+                                name: capture.scopeName,
                                 rules: capture.resolve(parser: self, grammar: grammar),
                                 theme: theme
                             )
@@ -180,7 +180,7 @@ public class Parser {
                         matched = true
                         // Create a new scope for the BeginEndRule and add it to the state.
                         let scope = Scope(
-                            name: rule.name,
+                            name: rule.scopeName,
                             rules: rule.resolveRules(parser: self, grammar: grammar),
                             end: rule.end,
                             theme: theme
@@ -191,7 +191,7 @@ public class Parser {
                         tokenizedLine.addToken(Token(range: NSRange(location: loc, length: newPos - loc), scopes: state.scopes))
                         
                         // If the BeginEndRule has a content name:
-                        if let contentName = rule.contentName {
+                        if let contentName = rule.contentScopeName {
                             // Add an additional scope, with the same rules and end pattern.
                             // Set the isContentScope flag so we know what to do when we find the end match
                             state.scopes.append(Scope(
@@ -222,7 +222,7 @@ public class Parser {
         for token in tokenizedLine.tokens {
             let startIndex = line.utf16.index(line.utf16.startIndex, offsetBy: token.range.location)
             let endIndex = line.utf16.index(line.utf16.startIndex, offsetBy: token.range.upperBound)
-            debug(" - Token from \(token.range.location) to \(token.range.upperBound) '\(line[startIndex..<endIndex])' with scopes: [\(token.scopeNames.joined(separator: ", "))]")
+            debug(" - Token from \(token.range.location) to \(token.range.upperBound) '\(line[startIndex..<endIndex])' with scopes: [\(token.scopeNames.map{$0.rawValue}.joined(separator: ", "))]")
         }
         debug("")
         
@@ -250,8 +250,8 @@ public class Parser {
                 guard captureRange.location != NSNotFound else {
                     return nil
                 }
-                let startIndex = str.index(str.startIndex, offsetBy: captureRange.location)
-                let endIndex = str.index(str.startIndex, offsetBy: captureRange.upperBound)
+                let startIndex = str.utf16.index(str.startIndex, offsetBy: captureRange.location)
+                let endIndex = str.utf16.index(str.startIndex, offsetBy: captureRange.upperBound)
                 return (String(str[startIndex..<endIndex]), match.range(at: i))
             }
         }

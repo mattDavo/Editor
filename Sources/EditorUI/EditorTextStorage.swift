@@ -392,10 +392,14 @@ public class EditorTextStorage: NSTextStorage {
         print()
         print("Line start locs.count: \(lineStartLocs.count)")
         
+        lastInvalidatedRange = invalidatedRange
+        
         layoutManagers.forEach { manager in
             manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: invalidatedRange)
         }
     }
+    
+    var lastInvalidatedRange = NSRange(location: 0, length: 0)
     
     public func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
         self.parser = parser
@@ -405,10 +409,11 @@ public class EditorTextStorage: NSTextStorage {
         edited(.editedAttributes, range: fullRange, changeInLength: 0)
     }
     
-    public func updateSelectedRanges(_ selectedRanges: [NSRange]) {
+    /// - Returns: The ranges that had changed
+    public func updateSelectedRanges(_ selectedRanges: [NSRange]) -> [NSRange] {
         // Return if empty
         if string.isEmpty {
-            return
+            return []
         }
         
         // Find the lines of selection
@@ -453,5 +458,7 @@ public class EditorTextStorage: NSTextStorage {
                 manager.processEditing(for: self, edited: .editedAttributes, range: rangeChanged, changeInLength: 0, invalidatedRange: rangeChanged)
             }
         }
+        
+        return rangesChanged
     }
 }
