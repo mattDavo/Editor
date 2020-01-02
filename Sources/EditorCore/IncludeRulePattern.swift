@@ -17,13 +17,11 @@ public class IncludeRulePattern: Pattern {
     
     public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
         guard let repo = grammar.repository else {
-            print("Warning: Failed to resolve include rule with value: \(include) because grammar repository is nil.")
-            return []
+            fatalError("Warning: Failed to resolve include rule with value: \(include) because the grammar '\(grammar.scopeName)' repository is nil.")
         }
-        guard let rule = repo.patterns[include] else {
-            print("Warning: Failed to resolve include rule with value: \(include) because the grammar repository does not contain a pattern with name: \(include)")
-            return []
+        guard let pattern = repo.patterns[include] else {
+            fatalError("Warning: Failed to resolve include rule with value: \(include) because the grammar '\(grammar.scopeName)' repository does not contain a pattern with name: '\(include)'.")
         }
-        return rule.resolve(parser: parser, grammar: grammar)
+        return pattern.resolve(parser: parser, grammar: grammar)
     }
 }

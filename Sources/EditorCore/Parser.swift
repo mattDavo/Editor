@@ -23,7 +23,7 @@ public class Parser {
         return grammars.first(where: {$0.scopeName == scope})
     }
     
-    public func tokenize(_ grammar: Grammar, line: String, state: LineState, withTheme theme: Theme = .default) -> TokenizedLine {
+    public func tokenize(line: String, state: LineState, withTheme theme: Theme = .default) -> TokenizedLine {
         debug("Tokenizing line: \(line)")
         var state = state
         let tokenizedLine = TokenizedLine(tokens: [Token(range: NSRange(location: 0, length: 0), scopes: state.scopes)], state: state)
@@ -90,14 +90,14 @@ public class Parser {
                             // Create a scope for the capture.
                             let captureScope = Scope(
                                 name: capture.scopeName,
-                                rules: capture.resolve(parser: self, grammar: grammar),
+                                rules: capture.resolve(parser: self, grammar: rule.grammar!),
                                 theme: theme
                             )
                             // Create the capture state (the current state, with the capture state)
                             let captureState = LineState(scopes: state.scopes + [captureScope])
                             
                             // Use tokenize on the capture as if it was an entire line.
-                            let captureLine = tokenize(grammar, line: captureText, state: captureState, withTheme: theme)
+                            let captureLine = tokenize(line: captureText, state: captureState, withTheme: theme)
                             
                             // Adjust the range of tokens to account for the location of the capture.
                             captureLine.tokens = captureLine.tokens.map({
@@ -181,7 +181,7 @@ public class Parser {
                         // Create a new scope for the BeginEndRule and add it to the state.
                         let scope = Scope(
                             name: rule.scopeName,
-                            rules: rule.resolveRules(parser: self, grammar: grammar),
+                            rules: rule.resolveRules(parser: self, grammar: rule.grammar!),
                             end: rule.end,
                             theme: theme
                         )
@@ -195,7 +195,8 @@ public class Parser {
                             // Add an additional scope, with the same rules and end pattern.
                             // Set the isContentScope flag so we know what to do when we find the end match
                             state.scopes.append(Scope(
-                                name: contentName, rules: rule.resolveRules(parser: self, grammar: grammar),
+                                name: contentName,
+                                rules: rule.resolveRules(parser: self, grammar: rule.grammar!),
                                 end: rule.end,
                                 theme: theme,
                                 isContentScope: true

@@ -10,6 +10,9 @@ import Foundation
 public protocol Rule: Pattern {
     
     var id: UUID { get }
+    
+    /// The `Grammar` context that the rule has been resolved from a `Pattern` to a `rule` in.
+    var grammar: Grammar? { get set }
 }
 
 // See here for why we can't just inherit from equatable: https://khawerkhaliq.com/blog/swift-protocols-equatable-part-one/

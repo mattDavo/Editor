@@ -14,6 +14,8 @@ public class BeginEndRule: Rule, Pattern {
     
     public let id: UUID
     
+    weak public var grammar: Grammar?
+    
     /// The name of the rule, i.e. the scope.
     let scopeName: ScopeName
     
@@ -70,6 +72,7 @@ public class BeginEndRule: Rule, Pattern {
     }
     
     public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
+        self.grammar = grammar
         return [self]
     }
     
@@ -79,7 +82,7 @@ public class BeginEndRule: Rule, Pattern {
         }
         var rules = [Rule]()
         for pattern in patterns {
-            rules += pattern.resolve(parser: parser, grammar: grammar)
+            rules += pattern.resolve(parser: parser, grammar: self.grammar!)
         }
         self.rules = rules
         return rules

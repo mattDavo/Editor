@@ -314,7 +314,7 @@ public class EditorTextStorage: NSTextStorage {
             
             // Tokenize the line
             let line = (storage.string as NSString).substring(with: lineRanges[processingLine])
-            let tokenizedLine = parser.tokenize(grammar, line: line, state: state, withTheme: theme)
+            let tokenizedLine = parser.tokenize(line: line, state: state, withTheme: theme)
             tokenizedLines.append(tokenizedLine)
             
             self.tokenizedLines[processingLine] = tokenizedLine

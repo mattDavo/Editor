@@ -11,6 +11,8 @@ public class MatchRule: Rule, Pattern {
     
     public let id: UUID
     
+    public weak var grammar: Grammar?
+    
     let scopeName: ScopeName
     var match: NSRegularExpression
     var captures: [Capture]
@@ -32,6 +34,7 @@ public class MatchRule: Rule, Pattern {
     }
     
     public func resolve(parser: Parser, grammar: Grammar) -> [Rule] {
+        self.grammar = grammar
         return [self]
     }
 }
