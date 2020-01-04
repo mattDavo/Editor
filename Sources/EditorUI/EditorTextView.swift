@@ -205,13 +205,14 @@ public class EditorTextView: NSTextView {
     }
     
     public override func insertTab(_ sender: Any?) {
-        if indentUsingSpaces && tabWidth > 0, let storage = textStorage as? EditorTextStorage {
+        let range = selectedRange()
+        if indentUsingSpaces && tabWidth > 0, let storage = textStorage as? EditorTextStorage, range.location != NSNotFound {
             // Get location into the line
-            let lineLoc = storage.getLocationOnLine(selectedRange().location)
+            let lineLoc = storage.getLocationOnLine(range.location)
             // Get spaces that make up the rest of the tab
             let width = tabWidth - lineLoc%tabWidth
             
-            insertText(String(repeating: " ", count: width), replacementRange: selectedRange())
+            storage.replaceCharacters(in: range, with: String(repeating: " ", count: width))
         }
         else {
             insertText("\t", replacementRange: selectedRange())
@@ -219,18 +220,19 @@ public class EditorTextView: NSTextView {
     }
     
     public override func insertNewline(_ sender: Any?) {
-        if autoIndent, let storage = textStorage as? EditorTextStorage {
-            let lineNo = storage.getLocationLine(selectedRange().location)
+        let range = selectedRange()
+        if autoIndent, let storage = textStorage as? EditorTextStorage, range.location != NSNotFound {
+            let lineNo = storage.getLocationLine(range.location)
             let line = storage.getLine(lineNo) as NSString
             
             var spaces = 0
             var loc = 0
-            while loc < line.length && line.substring(with: NSRange(location: loc, length: 1)) == " " {
+            while loc < line.length - 1 && line.substring(with: NSRange(location: loc, length: 1)) == " " {
                 spaces += 1
                 loc += 1
             }
             
-            insertText("\n\(String(repeating: " ", count: spaces))", replacementRange: selectedRange())
+            storage.replaceCharacters(in: range, with: "\n\(String(repeating: " ", count: spaces))")
         }
         else {
             super.insertNewline(sender)
