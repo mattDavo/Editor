@@ -417,7 +417,7 @@ public class EditorTextStorage: NSTextStorage {
         self.grammar = baseGrammar
         self.theme = theme
         states = []
-        edited(.editedAttributes, range: fullRange, changeInLength: 0)
+        edited(.editedCharacters, range: fullRange, changeInLength: 0)
     }
     
     /// - Returns: The ranges that had changed
