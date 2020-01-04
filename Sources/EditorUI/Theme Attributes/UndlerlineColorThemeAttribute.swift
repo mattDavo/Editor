@@ -27,6 +27,6 @@ public class UnderlineThemeAttribute: TokenThemeAttribute {
     
     public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.underlineColor, value: color, range: range)
-        attrStr.addAttribute(.underlineStyle, value: style, range: range)
+        attrStr.addAttribute(.underlineStyle, value: style.rawValue, range: range)
     }
 }
