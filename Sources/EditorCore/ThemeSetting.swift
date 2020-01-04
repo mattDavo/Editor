@@ -31,8 +31,8 @@ public struct ThemeSetting {
     ///
     public init(
         scope: String,
-        parentScopes: [String],
-        attributes: [ThemeAttribute],
+        parentScopes: [String] = [],
+        attributes: [ThemeAttribute] = [],
         inSelectionAttributes: [ThemeAttribute] = [],
         outSelectionAttributes: [ThemeAttribute] = []
     ) {
