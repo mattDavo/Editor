@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "Editor",
     platforms: [
-        .macOS(SupportedPlatform.MacOSVersion.v10_14),
+        .macOS(SupportedPlatform.MacOSVersion.v10_13),
         .iOS(SupportedPlatform.IOSVersion.v12),
         .tvOS(SupportedPlatform.TVOSVersion.v12),
         .watchOS(SupportedPlatform.WatchOSVersion.v4)
