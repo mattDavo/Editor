@@ -8,16 +8,25 @@
 import Foundation
 import EditorCore
 
-public class UnderlineColorThemeAttribute: TokenThemeAttribute {
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import Cocoa
+#endif
+
+public class UnderlineThemeAttribute: TokenThemeAttribute {
     
     public let key = "underline-color"
     public let color: Color
+    public let style: NSUnderlineStyle
     
-    public init(color: Color) {
+    public init(color: Color, style: NSUnderlineStyle = .single) {
         self.color = color
+        self.style = style
     }
     
     public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
         attrStr.addAttribute(.underlineColor, value: color, range: range)
+        attrStr.addAttribute(.underlineStyle, value: style, range: range)
     }
 }
