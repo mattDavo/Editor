@@ -13,6 +13,10 @@ import Cocoa
 
 public class Editor: NSObject {
     
+    public typealias TokenHandler = ([(String, NSRange)]) -> Void
+    
+    var tokenHandlers = [String: [TokenHandler]]()
+    
     let textView: EditorTextView
     
     let parser: Parser
@@ -74,12 +78,33 @@ public class Editor: NSObject {
             }
         }
         
+        for tokenHandlers in self.tokenHandlers {
+            let tokens = storage.getTokens(forScope: tokenHandlers.key)
+            for handler in tokenHandlers.value {
+                handler(tokens)
+            }
+        }
+        
         // Check EOF
         if !storage.string.isEmpty && storage.string.last != "\n" {
             let prev = textView.selectedRanges
             storage.append(NSAttributedString(string: "\n"))
             textView.selectedRanges = prev
         }
+    }
+    
+    public func subscribe(toToken scope: String, handler: @escaping TokenHandler) {
+        if tokenHandlers.keys.contains(scope) {
+            tokenHandlers[scope]?.append(handler)
+        }
+        else {
+            tokenHandlers[scope] = [handler]
+        }
+        // Make first call
+        guard let storage = textView.textStorage as? EditorTextStorage else {
+            return
+        }
+        handler(storage.getTokens(forScope: scope))
     }
 }
 

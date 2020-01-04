@@ -10,11 +10,9 @@ import Foundation
 public class TokenizedLine {
     
     var tokens: [Token]
-    public var state: LineState
     
-    init(tokens: [Token] = [], state: LineState) {
+    init(tokens: [Token] = []) {
         self.tokens = tokens
-        self.state = state
     }
     
     public var length: Int {

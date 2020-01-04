@@ -32,6 +32,8 @@ public class EditorTextStorage: NSTextStorage {
     
     private var tokenizedLines = [TokenizedLine?]()
     
+    private var matchTokens = [[Token]]()
+    
     private var parser: Parser
     
     private var grammar: Grammar
@@ -218,12 +220,14 @@ public class EditorTextStorage: NSTextStorage {
             for _ in 0..<abs(changeInLines) {
                 states.remove(at: firstEditedLine + 1)
                 tokenizedLines.remove(at: firstEditedLine)
+                matchTokens.remove(at: firstEditedLine)
             }
         }
         else {
             for _ in 0..<abs(changeInLines) {
                 states.insert(nil, at: firstEditedLine + 1)
                 tokenizedLines.insert(nil, at: firstEditedLine)
+                matchTokens.insert([], at: firstEditedLine)
             }
         }
     }
@@ -301,6 +305,7 @@ public class EditorTextStorage: NSTextStorage {
         else {
             // Either both caches are empty or the cache is in an inconsistent state, either way, init both
             tokenizedLines = .init(repeating: nil, count: nContentLines)
+            matchTokens = .init(repeating: [], count: nContentLines)
             states = [grammar.createFirstLineState(theme: theme)]
         }
         
@@ -314,23 +319,24 @@ public class EditorTextStorage: NSTextStorage {
             
             // Tokenize the line
             let line = (storage.string as NSString).substring(with: lineRanges[processingLine])
-            let tokenizedLine = parser.tokenize(line: line, state: state, withTheme: theme)
-            tokenizedLines.append(tokenizedLine)
+            let result = parser.tokenize(line: line, state: state, withTheme: theme)
+            tokenizedLines.append(result.tokenizedLine)
             
-            self.tokenizedLines[processingLine] = tokenizedLine
+            self.tokenizedLines[processingLine] = result.tokenizedLine
+            self.matchTokens[processingLine] = result.matchTokens
             
             // See if the state (for the next line) was previously cached
             if processingLine + 1 < states.count {
                 // Check if we're not on the last line of the text, but on the last line of the processing lines and the state is different to the cache.
                 // If so we need to keep caching by extending the processing lines.
-                if processingLine < nContentLines - 1 && processingLine == processingLines.last && tokenizedLine.state != states[processingLine + 1] {
+                if processingLine < nContentLines - 1 && processingLine == processingLines.last && result.state != states[processingLine + 1] {
                     processingLines.last += 1
                 }
-                states[processingLine + 1] = tokenizedLine.state
+                states[processingLine + 1] = result.state
             }
             else {
                 // Cache the line
-                states.append(tokenizedLine.state)
+                states.append(result.state)
             }
             
             // Process next line
@@ -460,5 +466,16 @@ public class EditorTextStorage: NSTextStorage {
         }
         
         return rangesChanged
+    }
+    
+    public func getTokens(forScope scope: String) -> [(String, NSRange)] {
+        var res = [(String, NSRange)]()
+        let str = (storage.string as NSString)
+        for (i, matchTokens) in self.matchTokens.enumerated() {
+            let ranges = matchTokens.filter{ $0.scopeNames.last?.rawValue == scope }.map{$0.range.shifted(by: lineRanges[i].location)}
+            
+            res += zip(ranges.map{ str.substring(with: $0)}, ranges)
+        }
+        return res
     }
 }

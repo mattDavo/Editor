@@ -81,7 +81,7 @@ public class Grammar {
                     )
                 ]
             )
-        ], state: LineState(scopes: []))
+        ])
         let str = NSMutableAttributedString(string: "a")
         line.applyTheme(str, at: 0)
         return str.attributes(at: 0, effectiveRange: nil)

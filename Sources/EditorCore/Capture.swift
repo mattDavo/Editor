@@ -22,6 +22,9 @@ public class Capture: Pattern {
     /// Patterns to apply to the capture.
     var patterns: [Pattern]
     
+    /// Boolean value whether the capture should be applied.
+    let isActive: Bool
+    
     /// The lazy resolved rules from the patterns.
     private var rules: [Rule]?
     
@@ -30,8 +33,9 @@ public class Capture: Pattern {
     /// - parameter name: Scope to apply to the capture.
     /// - parameter patterns: Patterns to apply to the capture.
     ///
-    public init(name: String? = nil, patterns: [Pattern] = []) {
+    public init(name: String? = nil, isActive: Bool = true, patterns: [Pattern] = []) {
         self.scopeName = ScopeName(rawValue: name ?? "")
+        self.isActive = isActive
         self.patterns = patterns
     }
     
@@ -46,4 +50,9 @@ public class Capture: Pattern {
         self.rules = rules
         return rules
     }
+}
+
+extension Capture {
+    
+    public static let none = Capture(isActive: false)
 }
