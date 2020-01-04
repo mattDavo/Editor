@@ -225,7 +225,7 @@ public class EditorTextView: NSTextView {
             
             var spaces = 0
             var loc = 0
-            while line.substring(with: NSRange(location: loc, length: 1)) == " " {
+            while loc < line.length && line.substring(with: NSRange(location: loc, length: 1)) == " " {
                 spaces += 1
                 loc += 1
             }

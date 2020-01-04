@@ -40,11 +40,15 @@ public class EditorTextStorage: NSTextStorage {
     
     private var theme: Theme
     
+    var lastInvalidatedRange = NSRange(location: 0, length: 0)
+    
     private var _isProcessingEditing = false
     
     public var isProcessingEditing: Bool {
         _isProcessingEditing
     }
+    
+    public var shouldDebug = false
     
     var selectionLines = Set<Int>()
     
@@ -241,7 +245,7 @@ public class EditorTextStorage: NSTextStorage {
             line += 1
         }
         
-        return line
+        return min(line, lineRanges.count - 1)
     }
     
     public func getLine(_ i: Int) -> String {
@@ -283,6 +287,9 @@ public class EditorTextStorage: NSTextStorage {
     func processSyntaxHighlighting(editedRange: NSRange) -> (NSRange, NSRange) {
         // Return if empty
         if string.isEmpty {
+            matchTokens = []
+            tokenizedLines = []
+            states.removeAll()
             return (fullRange, fullRange)
         }
         
@@ -362,7 +369,7 @@ public class EditorTextStorage: NSTextStorage {
         // Important for fixing fonts where the font does not contain the glyph in the text, e.g. emojis.
         fixAttributes(in: processedRange)
         
-        print("Lines processed: \(processingLines.first) to \(processingLines.last)")
+        debug("Lines processed: \(processingLines.first) to \(processingLines.last)")
         
         let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
         
@@ -392,11 +399,11 @@ public class EditorTextStorage: NSTextStorage {
         }
         
         let (range, invalidatedRange) = processSyntaxHighlighting(editedRange: editedRange)
-        print("editedRange: \(editedRange)")
-        print("Range processed: \(range)")
-        print("Range invalidated: \(invalidatedRange)")
-        print()
-        print("Line start locs.count: \(lineStartLocs.count)")
+        debug("editedRange: \(editedRange)")
+        debug("Range processed: \(range)")
+        debug("Range invalidated: \(invalidatedRange)")
+        debug()
+        debug("Line start locs.count: \(lineStartLocs.count)")
         
         lastInvalidatedRange = invalidatedRange
         
@@ -404,8 +411,6 @@ public class EditorTextStorage: NSTextStorage {
             manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: invalidatedRange)
         }
     }
-    
-    var lastInvalidatedRange = NSRange(location: 0, length: 0)
     
     public func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
         self.parser = parser
@@ -477,5 +482,11 @@ public class EditorTextStorage: NSTextStorage {
             res += zip(ranges.map{ str.substring(with: $0)}, ranges)
         }
         return res
+    }
+    
+    private func debug(_ str: String = "") {
+        if shouldDebug {
+            print(str)
+        }
     }
 }
