@@ -40,7 +40,7 @@ public class EditorTextStorage: NSTextStorage {
     
     private var theme: Theme
     
-    var lastInvalidatedRange = NSRange(location: 0, length: 0)
+    var lastProcessedRange = NSRange(location: 0, length: 0)
     
     private var _isProcessingEditing = false
     
@@ -405,10 +405,10 @@ public class EditorTextStorage: NSTextStorage {
         debug()
         debug("Line start locs.count: \(lineStartLocs.count)")
         
-        lastInvalidatedRange = invalidatedRange
+        self.lastProcessedRange = range
         
         layoutManagers.forEach { manager in
-            manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: invalidatedRange)
+            manager.processEditing(for: self, edited: .editedAttributes, range: editedRange, changeInLength: 0, invalidatedRange: range)
         }
     }
     

@@ -66,9 +66,10 @@ public class Editor: NSObject {
         // Layout the view for the invalidated visible range.
         // Get the visible range
         let visibleRange = layoutManager.glyphRange(forBoundingRect: textView.visibleRect, in: textContainer)
+        
         // Get the intersection of the invalidated range and visible range.
         // If there is no intersection, no display needed.
-        if let visibleInvalid = visibleRange.intersection(storage.lastInvalidatedRange) {
+        if let visibleInvalid = visibleRange.intersection(storage.lastProcessedRange) {
             // Try to get the bounding rect of the invalid range and only re-render it, otherwise re-render the entire text view.
             if let rect = textView.boundingRect(forCharacterRange: visibleInvalid) {
                 textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
@@ -160,29 +161,29 @@ extension Editor: NSLayoutManagerDelegate {
     
     // Inspiration from: https://stackoverflow.com/a/57697139
     public func layoutManager(_ layoutManager: NSLayoutManager, shouldGenerateGlyphs glyphs: UnsafePointer<CGGlyph>, properties props: UnsafePointer<NSLayoutManager.GlyphProperty>, characterIndexes charIndexes: UnsafePointer<Int>, font aFont: NSFont, forGlyphRange glyphRange: NSRange) -> Int {
-        
+
         guard let storage = layoutManager.textStorage else {
             return 0
         }
-        
+
         // Allocate for glyph modification
         let modifiedGlyphProperties: UnsafeMutablePointer<NSLayoutManager.GlyphProperty> = .allocate(capacity: glyphRange.length)
-        
+
         // Calculate the character range
         let firstCharIndex = charIndexes[0]
         let lastCharIndex = charIndexes[glyphRange.length - 1]
         let charactersRange = NSRange(location: firstCharIndex, length: lastCharIndex - firstCharIndex + 1)
-        
+
         // Find the ranges that need to be hidden
         var hiddenRanges = [NSRange]()
         storage.enumerateAttribute(HiddenThemeAttribute.Key, in: charactersRange, using: { value, range, stop in
             guard value as? Bool == true else {
                 return
             }
-            
+
             hiddenRanges.append(range)
         })
-        
+
         // Set the glyph properties
         for i in 0 ..< glyphRange.length {
             let characterIndex = charIndexes[i]
@@ -194,10 +195,10 @@ extension Editor: NSLayoutManagerDelegate {
                 modifiedGlyphProperties[i] = .controlCharacter
             }
         }
-        
+
         // Set the new glyphs
         layoutManager.setGlyphs(glyphs, properties: modifiedGlyphProperties, characterIndexes: charIndexes, font: aFont, forGlyphRange: glyphRange)
-        
+
         return glyphRange.length
     }
 }
