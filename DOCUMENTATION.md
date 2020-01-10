@@ -8,7 +8,7 @@ Editor is composed of two products:
 You will very likely be using both, keep reading for how to use them.
 
 ## `EditorCore`
-Most of your interaction with `EditorCore` will be defining your language grammars and themes.
+Most of your interaction with `EditorCore` will be defining your language grammars, themes and setting up your parser.
 
 ## Grammar
 A grammar is a definition of the langauge structure. It allows us to tokenize the text into distinct tokens with all of the scope that each token has so that we can apply context-aware syntax highlighting. For example, if a grammar was defined for the Swift programming langauge and we had the following code:
@@ -194,7 +194,59 @@ Grammar(
 Now obviously for this example, we have more lines of code but we have removed the duplicate concrete pattern (rule) definition. However, it is not too hard to see that as the Grammar grows, it will be beneficial by reducing the duplicate pattern definition like in the original. 
 
 ## Themes
-**TODO**
+The next step in using the `EditorCore` is defining your theme(/s). When we tokenize a piece of text with a grammar we also provide it the desired theme, so that the attributes become associated with the tokens. So what is a theme? A theme is simply just a definition of what attributes should be applied to which scopes. Tokens with multiple scopes (and this will be most of the them) apply scopes in order that they were pushed onto the scope stack. For example, the base grammar scope will be applied first, then the maybe a string scope, then maybe a special token within the string scope.
+
+Create a theme specifying it's name (which isn't too important) and the list of settings, in any order.
+```Swift
+Theme(name: "basic", settings: [...])
+```
+
+The settings are defined like so:
+```Swift
+ThemeSetting(
+    scope: "string.quoted.double",
+    parentScopes: [...],
+    attributes: [...],
+    inSelectionAttributes: [...],
+    outSelectionAttributes: [...]
+)
+```
+
+- `scope` defines the scope that the attributes should be applied to. However, scopes in the tokens do **NOT** have to completely match this scope name. Instead, they only need to match components in this scope. For example, this will match scopes such as `string.quoted.double`, `string.quoted.double.swift` and `string.quoted.double.python` but will not match scopes such as `string.quoted`, `string.quoted.single`, `string.quoted.doublequote`.
+- `parentScopes` is **NOT IMPLEMENTED YET**
+- `attributes` are the `ThemeAttribute`s to apply to the token regardless. They should implement either `TokenThemeAttribute` or `LineThemeAttribute`. They can affect any of the standard `NSAttributedString` attributes or custom ones. These attributes can safely change the tokens font, paragraph style and attachment attributes as they will be applied prior to a call of `fixAttributes(:)`.
+- `inSelectionAttributes` and `outSelectionAttributes` are the attributes to apply to the token when the token is/isn't in a paragraph (line) that is part of the selection or containing the cursor. A call to `fixAttributes(:)` is not always made after applying these attributes so it not safe to modify the font, paragraph style or attachment attributes. These types of attributes were designed for rendering markdown in the textview whenever the line is not being edited. A common attribute to put in these is the `HiddenThemeAttribute` to show/hide syntax characters.
+
+### `ThemeAttributes`
+Finally, what options are there for `ThemeAttributes`. Attributes should implement one of the two available protocols: `TokenThemeAttribute` or `LineThemeAttribute`.
+
+The `TokenThemeAttribute` is designed for adding attributes for the exact range of the token.
+
+The `LineThemeAttribute` is designed for adding paragraph style to line (paragraph) that the token is on. This is split from `TokenThemeAttribute` for efficiency purposes. It is important to note the `LineThemeAttribute`s are applied in order of token, then by increasing specificity of scope. Remember this if you are trying to apply a custom paragraph style for a certain token which isn't the last token on the line, because it could easily be overwritten by a later token.
+
+
+## Parser
+Now that you know how to define a `Grammar` and a `Theme` you need to know how to put them to work.
+
+Create a `Parser` like so, providing all of the grammars that you will need:
+```Swift
+let parser = Parser(grammars: [...])
+```
+
+You will need to provide all grammars that your grammars reference. For example, if you are building a markdown editor, you may have something like the following:
+```Swift
+let parser = Parser(grammars: [markdownGrammar, swiftGrammar, objCGrammar, pythonGrammar, javaGrammar, htmlGrammar])
+```
+This is so that when tokenizing, the included grammars (and their patterns) can be resolved.
+
+Now that we have created our parser, we can start tokenizing, like so:
+```Swift
+let state = markdownGrammar.createFirstLineState(theme: basicTheme)
+let tokenizedLine = parser.tokenize(line: "# EditorCore README\n", state: state, withTheme: basicTheme)
+```
+However, it is unlikely that you will use these methods as `Editor`, `EditorTextStorage`, `EditorLayoutManager` and `EditorTextView` handle all of this for you.
+
+
 
 ## `EditorUI`
 
