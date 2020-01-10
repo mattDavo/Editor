@@ -189,7 +189,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
 
 
 ##### All
-- [ ] Subscribe to tokens, changes
+- [x] Subscribe to tokens, changes
 - [ ] Auto-completion and suggestions
 - [ ] Smarter auto-indent, based on scope to determine depth of indent.
 
