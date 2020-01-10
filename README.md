@@ -116,6 +116,7 @@ Using any of the pre-defined `ThemeAttribute`s defined in EditorUI or write your
 Customizable corner radius and style.
 
 Token only:
+
 ![](Images/roundedBackgroundColor.png?raw=true)
 
 Full line:
@@ -125,8 +126,10 @@ Full line:
 #### Hidden attributes.
 Hide certain tokens.
 
+
 #### Actions.
 Make tokens clickable, and add a handler.
+
 
 ### Apply different attributes to a given token when the cursor is and isn't in the paragraph.
 Cursor in the paragraph:
@@ -135,6 +138,7 @@ Cursor in the paragraph:
 Cursor out of the paragraph.
 ![](Images/outSelectionExample.png?raw=true)
 
+
 ### Subscribe to all the `MatchRule` tokens.
 For example you can easily get all the tags in the document.
 ```Swift
@@ -142,6 +146,28 @@ editor.subscribe(toToken: "tag")
 ```
 This works for all `MatchRule` tokens, even with captures in them. This makes getting all of the tokens of a certain type much easier when a `MatchRule` has complex captures. For example, a Swift string with interpolation.
 
+
+### Customizable Editor
+#### Add line numbers
+```Swift
+textView.replace(lineNumberGutter: LineNumberGutter(withTextView: textView))
+```
+
+#### Indent Using Spaces
+```Swift
+textView.indentUsingSpaces = true
+textView.tabWidth = 4
+```
+
+#### Auto Indent
+```Swift
+textView.autoIndent = true
+```
+
+#### Customize Caret Width
+```Swift
+textView.caretSize = 4
+```
 
 ## Contributing
 
