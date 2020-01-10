@@ -23,23 +23,29 @@ public class Parser {
         return grammars.first(where: {$0.scopeName == scope})
     }
     
-    public func tokenize(line: String, state: LineState, withTheme theme: Theme = .default) -> TokenizeResult {
+    public func tokenize(
+        line: String,
+        state: LineState,
+        withTheme theme: Theme = .default,
+        inRange range: NSRange? = nil
+    ) -> TokenizeResult {
         debug("Tokenizing line: \(line)")
         var state = state
+        
+        var loc = range?.location ?? 0
+        let endLoc = range?.upperBound ?? line.utf16.count
         let tokenizedLine = TokenizedLine(tokens: [
             Token(
-                range: NSRange(location: 0, length: 0),
+                range: NSRange(location: loc, length: 0),
                 scopes: state.scopes
             )
         ])
         
         var matchTokens = [Token]()
-        
-        var loc = 0
-        while (loc < line.utf16.count) {
+        while (loc < endLoc) {
             // Before we apply the rules in the current scope, see if we are in a BeginEndRule and reached the end of its scope.
             if let endPattern = state.currentScope?.end {
-                if let newPos = matches(pattern: endPattern, str: line, at: loc) {
+                if let newPos = matches(pattern: endPattern, str: line, in: NSRange(location: loc, length: endLoc-loc)) {
                     // Pop off state.
                     let last = state.scopes.removeLast()
                     // If the state is a content state, pop off the next as well.
@@ -77,7 +83,7 @@ public class Parser {
             for rule in currentScope.rules {
                 // Apply the match rule
                 if let rule = rule as? MatchRule {
-                    if let newPos = matches(pattern: rule.match, str: line, at: loc) {
+                    if let newPos = matches(pattern: rule.match, str: line, in: NSRange(location: loc, length: endLoc-loc)) {
                         // Set matched flag
                         matched = true
                         // Create a new scope
@@ -100,7 +106,7 @@ public class Parser {
                         matchTokens.append(matchToken)
                         
                         // Apply capture groups
-                        for (i, (captureText, captureRange)) in captures(pattern: rule.match, str: line, at: loc).enumerated() {
+                        for (i, captureRange) in captures(pattern: rule.match, str: line, in: NSRange(location: loc, length: endLoc-loc)).enumerated() {
                             guard i < rule.captures.count else {
                                 // No capture defined for this (or further) capture(/s).
                                 break
@@ -122,16 +128,10 @@ public class Parser {
                             let captureState = LineState(scopes: state.scopes + [captureScope])
                             
                             // Use tokenize on the capture as if it was an entire line.
-                            let result = tokenize(line: captureText, state: captureState, withTheme: theme)
-                            
-                            // Adjust the range of tokens to account for the location of the capture.
-                            result.tokenizedLine.tokens = result.tokenizedLine.tokens.map{
-                                $0.shifted(by: captureRange.location)
-                            }
+                            let result = tokenize(line: line, state: captureState, withTheme: theme, inRange: captureRange)
                             
                             // Adjust and add the match tokens to our match tokens array
-                            matchTokens += result.matchTokens.map{ $0.shifted(by: captureRange.location) }
-                            
+                            matchTokens += result.matchTokens
                             
                             // Create a new array for the new version of the list of tokens.
                             var newTokens = [Token]()
@@ -205,7 +205,7 @@ public class Parser {
                 }
                 // Apply the begin end rule
                 else if let rule = rule as? BeginEndRule {
-                    if let newPos = matches(pattern: rule.begin, str: line, at: loc) {
+                    if let newPos = matches(pattern: rule.begin, str: line, in: NSRange(location: loc, length: endLoc-loc)) {
                         // Set matched flag
                         matched = true
                         // Create a new scope for the BeginEndRule and add it to the state.
@@ -267,9 +267,7 @@ public class Parser {
         return TokenizeResult(state: state, tokenizedLine: tokenizedLine, matchTokens: matchTokens)
     }
     
-    func matches(pattern: NSRegularExpression, str: String, at loc: Int) -> Int? {
-        let range = NSRange(location: loc, length: str.utf16.count - loc)
-        
+    func matches(pattern: NSRegularExpression, str: String, in range: NSRange) -> Int? {
         let matchRange = pattern.rangeOfFirstMatch(in: str, options: Self.matchingOptions, range: range)
         if matchRange.location != NSNotFound {
             return matchRange.upperBound
@@ -279,18 +277,14 @@ public class Parser {
         }
     }
     
-    func captures(pattern: NSRegularExpression, str: String, at loc: Int) -> [(String, NSRange)] {
-        let range = NSRange(location: loc, length: str.utf16.count - loc)
-        
+    func captures(pattern: NSRegularExpression, str: String, in range: NSRange) -> [NSRange] {
         if let match = pattern.firstMatch(in: str, options: Self.matchingOptions, range: range) {
-            return (0..<match.numberOfRanges).compactMap { i -> (String, NSRange)? in
+            return (0..<match.numberOfRanges).compactMap { i -> NSRange? in
                 let captureRange = match.range(at: i)
                 guard captureRange.location != NSNotFound else {
                     return nil
                 }
-                let startIndex = str.utf16.index(str.startIndex, offsetBy: captureRange.location)
-                let endIndex = str.utf16.index(str.startIndex, offsetBy: captureRange.upperBound)
-                return (String(str[startIndex..<endIndex]), match.range(at: i))
+                return  match.range(at: i)
             }
         }
         else {
