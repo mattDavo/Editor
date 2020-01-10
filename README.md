@@ -107,6 +107,41 @@ And voilà! With the appropriate settings in the interface builder this will pro
 Be sure to read the [Documentation](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) to understand what the above code is doing so that you can create your own editors!
 
 
+## Features
+### Apply any `NSAttributedString` attributes to a given token.
+Using any of the pre-defined `ThemeAttribute`s defined in EditorUI or write your own by implementing the `TokenThemeAttribute` or `LineThemeAttribute` protocol.
+
+### Apply custom Editor attributes to a given token.
+#### Rounded background colors
+Customizable corner radius and style.
+
+Token only:
+![](Images/roundedBackgroundColor.png?raw=true)
+
+Full line:
+![](Images/roundedBackgroundColor2.png?raw=true)
+
+
+#### Hidden attributes.
+Hide certain tokens.
+
+#### Actions.
+Make tokens clickable, and add a handler.
+
+### Apply different attributes to a given token when the cursor is and isn't in the paragraph.
+Cursor in the paragraph:
+![](Images/inSelectionExample.png?raw=true)
+
+Cursor out of the paragraph.
+![](Images/outSelectionExample.png?raw=true)
+
+### Subscribe to all the `MatchRule` tokens.
+For example you can easily get all the tags in the document.
+```Swift
+editor.subscribe(toToken: "tag")
+```
+This works for all `MatchRule` tokens, even with captures in them. This makes getting all of the tokens of a certain type much easier when a `MatchRule` has complex captures. For example, a Swift string with interpolation.
+
 
 ## Contributing
 
@@ -124,6 +159,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
 - [ ] Clickable/tappable tokens with handlers
 - [ ] Token replacements, take a token and replace the text.
 - [x] State-conditional formatting: based on the position of the cursor
+- [ ] Use temporary attributes instead of the EditorTextStorage where possible for better performance.
 
 
 ##### All
@@ -139,6 +175,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
     - [ ] Pre-compute the ranges of lines, so splitting the entire text into lines on every edit is not necessary
     - [ ] Limit the use of fixAttributes(). Currently it is being used on the entire range of the re-formatted text, which could mean characters such as emojis that may only be typed once could end up being reformatted over and over again when an edit causes that line to be reformatted.
 - [ ] Improve the theme attribute computation and it's storage in the `Scope`/`Token`.
+- [ ] Use temporary attributes instead of the EditorTextStorage where possible.
 
 
 ### Recommended Reading for `EditorCore`
