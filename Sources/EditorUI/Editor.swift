@@ -24,6 +24,9 @@ public class Editor: NSObject {
     let grammar: Grammar
     
     let theme: Theme
+    
+    private var fixedGlyphProperties = [NSRange: [NSLayoutManager.GlyphProperty]]()
+    private var shouldResetGlyphProperties = true
 
     /// - param textView: The text view which should be observed and highlighted.
     /// - param notificationCenter: The notification center to subscribe in.
@@ -135,18 +138,12 @@ extension Editor: NSTextViewDelegate {
         }
         
         if !storage.isProcessingEditing {
-            var rangesChanged = storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue})
+            let rangeChanged = storage.updateSelectedRanges(textView.selectedRanges.map{$0.rangeValue})
             
             // If there are any lines that changed
-            if !rangesChanged.isEmpty {
-                // Union all of the ranges
-                let first = rangesChanged.removeFirst()
-                let totalChange = rangesChanged.reduce(first, {
-                    return $0.union($1)
-                })
-                
+            if rangeChanged.location != NSNotFound {
                 // And re-display. This is important for rounded highlighting for full lines to ensure that rounding is not applied in the middle.
-                if let rect = textView.boundingRect(forCharacterRange: totalChange) {
+                if let rect = textView.boundingRect(forCharacterRange: rangeChanged) {
                     textView.setNeedsDisplay(rect, avoidAdditionalLayout: false)
                 }
                 else {
@@ -158,6 +155,22 @@ extension Editor: NSTextViewDelegate {
 }
 
 extension Editor: NSLayoutManagerDelegate {
+
+    private func resetGlyphPropertiesIfNeeded(textStorage: NSTextStorage) {
+        guard shouldResetGlyphProperties else {
+            return
+        }
+
+        fixedGlyphProperties.removeAll()
+        shouldResetGlyphProperties = false
+    }
+
+    // MARK: - NSLayoutManagerDelegate
+
+    public func layoutManager(_: NSLayoutManager, didCompleteLayoutFor _: NSTextContainer?, atEnd layoutFinishedFlag: Bool) {
+        // The layout pass is done, reset the glyph properties on the next glyph generation pass.
+        shouldResetGlyphProperties = layoutFinishedFlag
+    }
     
     // Inspiration from: https://stackoverflow.com/a/57697139
     public func layoutManager(_ layoutManager: NSLayoutManager, shouldGenerateGlyphs glyphs: UnsafePointer<CGGlyph>, properties props: UnsafePointer<NSLayoutManager.GlyphProperty>, characterIndexes charIndexes: UnsafePointer<Int>, font aFont: NSFont, forGlyphRange glyphRange: NSRange) -> Int {
@@ -166,8 +179,7 @@ extension Editor: NSLayoutManagerDelegate {
             return 0
         }
 
-        // Allocate for glyph modification
-        let modifiedGlyphProperties: UnsafeMutablePointer<NSLayoutManager.GlyphProperty> = .allocate(capacity: glyphRange.length)
+        fixedGlyphProperties[glyphRange] = [NSLayoutManager.GlyphProperty]()
 
         // Calculate the character range
         let firstCharIndex = charIndexes[0]
@@ -183,22 +195,26 @@ extension Editor: NSLayoutManagerDelegate {
 
             hiddenRanges.append(range)
         })
-
+        
         // Set the glyph properties
         for i in 0 ..< glyphRange.length {
             let characterIndex = charIndexes[i]
-            modifiedGlyphProperties[i] = props[i]
+            var glyphProperties = props[i]
 
             let matchingHiddenRanges = hiddenRanges.filter { NSLocationInRange(characterIndex, $0) }
             if !matchingHiddenRanges.isEmpty {
                 // Note: .null is the value that makes sense here, however it causes strange indentation issues when the first glyph on the line is hidden.
-                modifiedGlyphProperties[i] = .controlCharacter
+                glyphProperties = .controlCharacter
             }
+            
+            fixedGlyphProperties[glyphRange]!.append(glyphProperties)
         }
+        
+        let modifiedGlyphPropertiesPointer = UnsafePointer<NSLayoutManager.GlyphProperty>(fixedGlyphProperties[glyphRange]!)
 
         // Set the new glyphs
-        layoutManager.setGlyphs(glyphs, properties: modifiedGlyphProperties, characterIndexes: charIndexes, font: aFont, forGlyphRange: glyphRange)
-
+        layoutManager.setGlyphs(glyphs, properties: modifiedGlyphPropertiesPointer, characterIndexes: charIndexes, font: aFont, forGlyphRange: glyphRange)
+        
         return glyphRange.length
     }
 }

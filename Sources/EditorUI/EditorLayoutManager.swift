@@ -51,7 +51,11 @@ class EditorLayoutManager: NSLayoutManager {
                 // Adjust for text container insets
                 for i in 0..<rectCount {
                     rectArray[i] = rectArray[i].offsetBy(dx: origin.x, dy: origin.y)
-                    rectArray[i] = rectArray[i].insetBy(dx: -5, dy: 0)
+                    // TODO: More into RoundedBackground class.
+                    let leftInset: CGFloat = -1
+                    let rightInset: CGFloat = -1
+                    rectArray[i] = rectArray[i].insetBy(dx: leftInset + rightInset, dy: 0)
+                    rectArray[i] = rectArray[i].offsetBy(dx: (leftInset - rightInset)/2, dy: 0)
                 }
                 
                 self.fillRoundedBackgroundRectArray(rectArray, count: rectCount, color: roundedBackground.color, cornerRadius: cornerRadius)

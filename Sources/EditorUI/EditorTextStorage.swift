@@ -282,15 +282,15 @@ public class EditorTextStorage: NSTextStorage {
     /// Processes syntax highlighting on the minimum range possible.
     ///
     /// - Parameter editedRange: The range of the edit, if known. If the edited range is  provided the syntax highlighting will be done by processing the least amount of the document as possible using the pevious state of the document.
-    /// - Returns: A tuple containing the edited range and the invalidated range. The edited range is the range of the string that was processed and attributes were applied. The invalidated range is the range of characters that were changed as a result of the edit, e.g. if lines were added or deleted, it will included all of the lines afterwards, so we can re-render the view.
+    /// - Returns: The processed range: the range of the string that was processed and attributes were applied.
     ///
-    func processSyntaxHighlighting(editedRange: NSRange) -> (NSRange, NSRange) {
+    func processSyntaxHighlighting(editedRange: NSRange) -> NSRange {
         // Return if empty
         if string.isEmpty {
             matchTokens = []
             tokenizedLines = []
             states.removeAll()
-            return (fullRange, fullRange)
+            return fullRange
         }
         
         // Get the number of content lines.
@@ -371,13 +371,11 @@ public class EditorTextStorage: NSTextStorage {
         
         debug("Lines processed: \(processingLines.first) to \(processingLines.last)")
         
-        let invalidatedRange = (change != 0) ? NSRange(location: startOfProcessing, length: length - startOfProcessing) : processedRange
-        
         guard !self.tokenizedLines.contains(where: {$0==nil}) && self.tokenizedLines.count == nContentLines else {
             fatalError("Failed to cache tokenized lines correctly")
         }
         
-        return (processedRange, invalidatedRange)
+        return processedRange
     }
     
     public override func processEditing() {
@@ -398,17 +396,15 @@ public class EditorTextStorage: NSTextStorage {
             return
         }
         
-        let (range, invalidatedRange) = processSyntaxHighlighting(editedRange: editedRange)
+        let range = processSyntaxHighlighting(editedRange: editedRange)
         debug("editedRange: \(editedRange)")
         debug("Range processed: \(range)")
-        debug("Range invalidated: \(invalidatedRange)")
         debug()
-        debug("Line start locs.count: \(lineStartLocs.count)")
         
         self.lastProcessedRange = range
         
         layoutManagers.forEach { manager in
-            manager.processEditing(for: self, edited: .editedAttributes, range: editedRange, changeInLength: 0, invalidatedRange: range)
+            manager.processEditing(for: self, edited: .editedAttributes, range: range, changeInLength: 0, invalidatedRange: range)
         }
     }
     
@@ -421,10 +417,10 @@ public class EditorTextStorage: NSTextStorage {
     }
     
     /// - Returns: The ranges that had changed
-    public func updateSelectedRanges(_ selectedRanges: [NSRange]) -> [NSRange] {
+    public func updateSelectedRanges(_ selectedRanges: [NSRange]) -> NSRange {
         // Return if empty
         if string.isEmpty {
-            return []
+            return NSRange(location: NSNotFound, length: 0)
         }
         
         // Find the lines of selection
@@ -464,13 +460,21 @@ public class EditorTextStorage: NSTextStorage {
             lineLoc += tokenizedLine.length
         }
         
-        for rangeChanged in rangesChanged {
+        if !rangesChanged.isEmpty {
+            let first = rangesChanged.removeFirst()
+            let rangeChanged = rangesChanged.reduce(first, {
+                return $0.union($1)
+            })
+            
             layoutManagers.forEach { manager in
-                manager.processEditing(for: self, edited: .editedAttributes, range: rangeChanged, changeInLength: 0, invalidatedRange: rangeChanged)
+                manager.processEditing(for: self, edited: .editedAttributes, range: NSRange(location: rangeChanged.upperBound, length: 0), changeInLength: 0, invalidatedRange: rangeChanged)
             }
+            
+            return rangeChanged
         }
-        
-        return rangesChanged
+        else {
+            return NSRange(location: NSNotFound, length: 0)
+        }
     }
     
     public func getTokens(forScope scope: String) -> [(String, NSRange)] {

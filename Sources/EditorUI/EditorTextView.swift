@@ -191,7 +191,7 @@ public class EditorTextView: NSTextView {
     }
     
     // Courtesy of: https://christiantietze.de/posts/2017/08/nstextview-fat-caret/
-    var caretSize: CGFloat = 4
+    public var caretSize: CGFloat = 4
     open override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {
         var rect = rect
         rect.size.width = caretSize
@@ -213,6 +213,7 @@ public class EditorTextView: NSTextView {
             let width = tabWidth - lineLoc%tabWidth
             
             storage.replaceCharacters(in: range, with: String(repeating: " ", count: width))
+            didChangeText()
         }
         else {
             insertText("\t", replacementRange: selectedRange())
@@ -233,6 +234,7 @@ public class EditorTextView: NSTextView {
             }
             
             storage.replaceCharacters(in: range, with: "\n\(String(repeating: " ", count: spaces))")
+            didChangeText()
         }
         else {
             super.insertNewline(sender)
