@@ -182,7 +182,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
 
 
 ##### EditorUI
-- [ ] Clickable/tappable tokens with handlers
+- [x] Clickable/tappable tokens with handlers
 - [ ] Token replacements, take a token and replace the text.
 - [x] State-conditional formatting: based on the position of the cursor
 - [ ] Use temporary attributes instead of the EditorTextStorage where possible for better performance.
@@ -198,7 +198,7 @@ Contributions are welcomed and encouraged. Feel free to raise pull requests, rai
     - [ ] Re-write in ObjC because the bridging is expensive and can be up to 3 times faster. See:
         - https://mjtsai.com/blog/2019/02/22/swift-subclass-of-nstextstorage-is-slow-because-of-swift-bridging/
         - https://www.reddit.com/r/swift/comments/7hcxlt/whats_your_experience_using_swift_to_handle_large/
-    - [ ] Pre-compute the ranges of lines, so splitting the entire text into lines on every edit is not necessary
+    - [x] Pre-compute the ranges of lines, so splitting the entire text into lines on every edit is not necessary
     - [ ] Limit the use of fixAttributes(). Currently it is being used on the entire range of the re-formatted text, which could mean characters such as emojis that may only be typed once could end up being reformatted over and over again when an edit causes that line to be reformatted.
 - [ ] Improve the theme attribute computation and it's storage in the `Scope`/`Token`.
 - [ ] Use temporary attributes instead of the EditorTextStorage where possible.
