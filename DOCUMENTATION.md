@@ -217,7 +217,7 @@ ThemeSetting(
 - `attributes` are the `ThemeAttribute`s to apply to the token regardless. They should implement either `TokenThemeAttribute` or `LineThemeAttribute`. They can affect any of the standard `NSAttributedString` attributes or custom ones. These attributes can safely change the tokens font, paragraph style and attachment attributes as they will be applied prior to a call of `fixAttributes(:)`.
 - `inSelectionAttributes` and `outSelectionAttributes` are the attributes to apply to the token when the token is/isn't in a paragraph (line) that is part of the selection or containing the cursor. A call to `fixAttributes(:)` is not always made after applying these attributes so it not safe to modify the font, paragraph style or attachment attributes. These types of attributes were designed for rendering markdown in the textview whenever the line is not being edited. A common attribute to put in these is the `HiddenThemeAttribute` to show/hide syntax characters.
 
-### `ThemeAttributes`
+### `ThemeAttribute`s
 Finally, what options are there for `ThemeAttributes`. Attributes should implement one of the two available protocols: `TokenThemeAttribute` or `LineThemeAttribute`.
 
 The `TokenThemeAttribute` is designed for adding attributes for the exact range of the token.
@@ -303,3 +303,32 @@ editor.subscribe(toToken: "action") { (res) in
     }
 }
 ```
+
+### `ThemeAttribute`s
+There are many predefined `ThemeAttribute`s in `EditorUI` that apply standard `NSAttributedString` attributes:
+- `ColorThemeAttribute`
+- `DefaultTabIntervalThemeAttribute`
+- `FirstLineHeadIndentThemeAttribute`
+- `FontThemeAttribute`
+- `HeadIndentThemeAttribute`
+- `KernThemeAttribute`
+- `LigatureThemeAttribute`
+- `LineHeightThemeAttribute`
+- `ParagraphSpacingAfterThemeAttribute`
+- `ParagraphSpacingBeforeThemeAttribute`
+- `TabStopsThemeAttribute`
+- `TailIndentThemeAttribute`
+- `TextAlignmentThemeAttribute`
+- `TextBlockThemeAttribute`
+- `UndlerlineColorThemeAttribute`
+
+There are also font modifying attributes such as:
+- `BoldThemeAttribute` 
+- `ItalicThemeAttribute`
+
+Extended default attributes 
+- `BackgroundColorThemeAttribute` provides rounded background color functionality.
+- `ActionThemeAttribute` adds a handler to link functionality.
+
+Other attributes
+- `HiddenThemeAttribute` does not render glyphs formed by characters with this attribute. Useful for hiding syntax.
