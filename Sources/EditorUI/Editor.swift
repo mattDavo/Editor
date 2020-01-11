@@ -19,11 +19,23 @@ public class Editor: NSObject {
     
     let textView: EditorTextView
     
-    let parser: Parser
+    var _parser: Parser
     
-    let grammar: Grammar
+    var _grammar: Grammar
     
-    let theme: Theme
+    var _theme: Theme
+    
+    var parser: Parser {
+        _parser
+    }
+    
+    var grammar: Grammar {
+        _grammar
+    }
+    
+    var theme: Theme {
+        _theme
+    }
     
     private var fixedGlyphProperties = [NSRange: [NSLayoutManager.GlyphProperty]]()
     private var shouldResetGlyphProperties = true
@@ -39,9 +51,9 @@ public class Editor: NSObject {
         notificationCenter: NotificationCenter = .default)
     {
         self.textView = textView
-        self.parser = parser
-        self.grammar = baseGrammar
-        self.theme = theme
+        self._parser = parser
+        self._grammar = baseGrammar
+        self._theme = theme
         super.init()
         
         textView.delegate = self
@@ -53,6 +65,16 @@ public class Editor: NSObject {
         didHighlightSyntax(textView: textView)
         
         notificationCenter.addObserver(self, selector: #selector(textViewDidChange(_:)), name: NSText.didChangeNotification, object: textView)
+    }
+    
+    public func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
+        _parser = parser
+        _grammar = baseGrammar
+        _theme = theme
+        
+        textView.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
+        textView.typingAttributes = baseGrammar.baseAttributes(forTheme: theme)
+        didHighlightSyntax(textView: textView)
     }
 
     @objc func textViewDidChange(_ notification: Notification) {

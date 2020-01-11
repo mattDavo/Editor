@@ -249,5 +249,57 @@ However, it is unlikely that you will use these methods as `Editor`, `EditorText
 
 
 ## `EditorUI`
+`EditorUI` integrates `EditorCore` into `Cocoa`'s `NSTextView` and will be integrated into `UIKit`'s `UITextView`. `EditorCore` contains the following:
+- `EditorTextStorage` is the implementation of `NSTextStorage` which handles the interaction with `EditorCore`.
+- `EditorLayoutManager` is a subclass of `NSLayoutManager` used to implement custom `ThemeAttribute`s.
+- `EditorTextView` is a subclass of `NSTextView` implementing custom features.
+- `Editor` is a holds the `EditorTextView` and coordinates all the `Editor` functionality.
+- `LineNumberGutter` is an `NSRulerView` for adding line numbers to your `EditorTextView`.
+- Default `ThemeAttributes`.
 
-**TODO**
+Currently, `EditorTextView` it is only built for `NSTextView`, however, since `UITextView` shares a lot of the internals, there is not a lot of work required to implement `EditorTextView` for it. 
+
+### `EditorTextView`
+If you are creating a code editor or just don't want tabs you can indent with spaces instead of tabs:
+```Swift
+editorTextView.indentUsingSpaces = true
+```
+
+You can then define the number of spaces that should be inserted for a tab.
+```Swift
+editorTextView.tabWidth = 4
+```
+
+You may also enable auto indent, to indent the same amount of spaces on the current line when inserting a new line. Currently only this naive auto-indent is supported. There is potential that context-aware indentation is added.
+```Swift
+editorTextView.autoIndent = true
+```
+
+Add line numbers to your editor. You can customize the gutter text color, gutter background color, gutter current line foregroundColor and the gutter width.
+```Swift
+editorTextView.replace(lineNumberGutter: LineNumberGutter(withTextView: textView))
+editorTextView.gutterForegroundColor = .secondaryLabelColor
+editorTextView.gutterBackgroundColor = .textBackgroundColor
+editorTextView.gutterCurrentLineForegroundColor = .selectedTextColor
+editorTextView.gutterWidth = 60
+```
+
+### `Editor`
+Create an editor like so, where the `baseGrammar` is the grammar that should initialise the state of the tokenization of the text. Remember if the base grammar has included grammars in its definition they should also be registered in the `Parser`!
+```Swift
+let editor = Editor(textView: textView, parser: parser, baseGrammar: exampleGrammar, theme: exampleTheme)
+```
+
+You can later change the `Parser`, base `Grammar` and the `Theme` later:
+```Swift
+editor.replace(parser: newParser, baseGrammar: newGrammar, theme: newTheme)
+```
+
+You can use an `Editor` to receive a list of all full-length (not split up into sub-tokens, with captures) tokens with a given tag, for all scopes that applied with a `MatchRule`. For example, here we receive a list of all the tags (and their ranges) in the text after every edit.
+```Swift
+editor.subscribe(toToken: "action") { (res) in
+    for (str, range) in res {
+        print(str, range)
+    }
+}
+```

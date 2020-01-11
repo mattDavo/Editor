@@ -168,7 +168,7 @@ public class EditorTextView: NSTextView {
         }
     }
     
-    public func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
+    internal func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
         _parser = parser
         _grammar = baseGrammar
         _theme = theme

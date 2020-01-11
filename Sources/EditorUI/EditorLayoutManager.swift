@@ -11,10 +11,10 @@ import EditorCore
 #if os(macOS)
 import Cocoa
 
-class EditorLayoutManager: NSLayoutManager {
+public class EditorLayoutManager: NSLayoutManager {
     
     // Inspiration from : https://instagram-engineering.com/building-type-mode-for-stories-on-ios-and-android-8804e927feba
-    override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
+    override public func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
         defer {
             // Call super last to apply normal highlighting with higher priority.
             super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
