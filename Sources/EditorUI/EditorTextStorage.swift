@@ -69,7 +69,7 @@ public class EditorTextStorage: NSTextStorage {
         fatalError("\(#function) is not supported")
     }
     
-    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: PasteboardType) {
         fatalError("\(#function) is not supported")
     }
     

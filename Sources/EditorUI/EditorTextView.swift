@@ -8,7 +8,114 @@
 import Foundation
 import EditorCore
 
-#if os(macOS)
+#if os(iOS)
+import UIKit
+
+public class EditorTextView: UITextView {
+    
+    // MARK: - Attributes
+    private var _parser: Parser = Parser(grammars: [.default])
+    private var _grammar: Grammar = .default
+    private var _theme: Theme = .default
+    
+    public var grammar: Grammar {
+        return _grammar
+    }
+    
+    public var theme: Theme {
+        return _theme
+    }
+    
+    public var parser: Parser {
+        return _parser
+    }
+    
+    /// Boolean value to determine whether tabs should be instead indented with spaces. The number of spaces is determined by `tabWidth`.
+    public var indentUsingSpaces = true
+    
+    /// If `indentUsingSpaces` is `true` it defines the number of spaces that should be inserted for a tab. If `indentUsingSpaces` is `false` this value will not be used and controlling the width of tabs should be done by setting the `tabStops` and `defaultTabInterval` values of the `NSParagraphStyle` NSAttributedString attribute.
+    public var tabWidth = 4
+    
+    /// Boolean value to determine whether the indentation pattern of the current line should be followed on the insertion of a new line.
+    public var autoIndent = true
+    
+    
+    // MARK: - Constructors
+    
+    public override init(frame: CGRect, textContainer: NSTextContainer?) {
+        super.init(frame: frame, textContainer: textContainer)
+        
+        commonInit()
+    }
+    
+    public required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        
+        commonInit()
+    }
+    
+//    var storage: EditorTextStorage?
+     
+    private func commonInit() {
+//        textStorage.removeLayoutManager(textStorage.layoutManagers.first!)
+//
+//        // Create NSLayoutManager subclass
+//        let manager = EditorLayoutManager()
+//
+//        // Update EditorTextStorage subclass
+//        storage = EditorTextStorage(parser: Parser(grammars: []), baseGrammar: .default, theme: .default)
+//        storage?.append(attributedText ?? NSAttributedString(string: ""))
+//
+//        manager.textStorage = storage
+//
+//        textContainer.replaceLayoutManager(manager)
+//
+//        print(textContainer)
+//        print(textStorage is EditorTextStorage)
+//        print(layoutManager)
+    }
+    
+    public static func create(frame: CGRect) -> EditorTextView {
+        // 1
+        let textStorage = EditorTextStorage(parser: Parser(grammars: []), baseGrammar: .default, theme: .default)
+        
+        // 2
+        let layoutManager = EditorLayoutManager()
+
+        // 3
+        let containerSize = CGSize(width: frame.width,
+                                 height: .greatestFiniteMagnitude)
+        let container = NSTextContainer(size: containerSize)
+        container.widthTracksTextView = true
+        layoutManager.addTextContainer(container)
+        textStorage.addLayoutManager(layoutManager)
+
+        // 4
+        return EditorTextView(frame: frame, textContainer: container)
+    }
+    
+    internal func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
+        _parser = parser
+        _grammar = baseGrammar
+        _theme = theme
+        guard let storage = textStorage as? EditorTextStorage else {
+            print("Cannot set grammar and theme on text storage because it is not of type EditorTextStorage")
+            return
+        }
+        storage.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
+    }
+    
+    func boundingRect(forCharacterRange range: NSRange) -> CGRect? {
+        // Convert the range for glyphs.
+        var glyphRange = NSRange()
+        layoutManager.characterRange(forGlyphRange: range, actualGlyphRange: &glyphRange)
+
+        return layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+    }
+}
+
+
+#elseif os(macOS)
 import Cocoa
 
 public class EditorTextView: NSTextView {
@@ -140,7 +247,7 @@ public class EditorTextView: NSTextView {
     
     /// Add observers to redraw the line number gutter, when necessary.
     internal func addLineNumberObservers() {
-      self.postsFrameChangedNotifications = true
+        self.postsFrameChangedNotifications = true
 
         NotificationCenter.default.addObserver(self, selector: #selector(drawGutter), name: NSView.frameDidChangeNotification, object: self)
         NotificationCenter.default.addObserver(self, selector: #selector(drawGutter), name: NSText.didChangeNotification, object: self)

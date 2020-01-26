@@ -11,15 +11,22 @@ import EditorCore
 #if os(iOS)
 import UIKit
 
-public struct BoldThemeAttribute: ThemeAttribute {
+public class BoldThemeAttribute: TokenThemeAttribute {
     public var key: String = "bold"
     
     public init() {}
     
-    public func apply(to attrStr: NSMutableAttributedString, withLineRange lineRange: NSRange, tokenRange: NSRange) {
+    public func apply(to attrStr: NSMutableAttributedString, withRange range: NSRange) {
+        let font = attrStr.attributes(at: range.location, effectiveRange: nil)[.font] as? UIFont ?? UIFont()
         
+        if let newDescriptor = font.fontDescriptor.withSymbolicTraits(font.fontDescriptor.symbolicTraits.union(.traitBold)) {
+            let newFont = UIFont(descriptor: newDescriptor, size: font.pointSize)
+            attrStr.addAttribute(.font, value: newFont, range: range)
+        }
+        else {
+            print("Warning: Failed to add bold font trait to token '\(attrStr.string)' with range: '\(range)'")
+        }
     }
-    
 }
 
 #elseif os(macOS)

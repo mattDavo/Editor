@@ -7,7 +7,11 @@
 
 import Foundation
 
-#if os(macOS)
+#if os(iOS)
+import UIKit
+
+
+#elseif os(macOS)
 
 import Cocoa
 
