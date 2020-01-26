@@ -8,6 +8,7 @@
 import Foundation
 import EditorCore
 
+// MARK: - iOS
 #if os(iOS)
 import UIKit
 
@@ -97,12 +98,7 @@ public class Editor: NSObject {
             }
         }
         
-        for tokenHandlers in self.tokenHandlers {
-            let tokens = storage.getTokens(forScope: tokenHandlers.key)
-            for handler in tokenHandlers.value {
-                handler(tokens)
-            }
-        }
+        callTokenHandlers(storage: storage)
         
         // Check EOF
         if !storage.string.isEmpty && storage.string.last != "\n" {
@@ -110,20 +106,6 @@ public class Editor: NSObject {
             storage.append(NSAttributedString(string: "\n"))
             textView.selectedRange = prev
         }
-    }
-    
-    public func subscribe(toToken scope: String, handler: @escaping TokenHandler) {
-        if tokenHandlers.keys.contains(scope) {
-            tokenHandlers[scope]?.append(handler)
-        }
-        else {
-            tokenHandlers[scope] = [handler]
-        }
-        // Make first call
-        guard let storage = textView.textStorage as? EditorTextStorage else {
-            return
-        }
-        handler(storage.getTokens(forScope: scope))
     }
 }
 
@@ -177,6 +159,7 @@ extension Editor: UITextViewDelegate {
     }
 }
 
+// MARK: - macOS
 #elseif os(macOS)
 import Cocoa
 
@@ -273,12 +256,7 @@ public class Editor: NSObject {
             }
         }
         
-        for tokenHandlers in self.tokenHandlers {
-            let tokens = storage.getTokens(forScope: tokenHandlers.key)
-            for handler in tokenHandlers.value {
-                handler(tokens)
-            }
-        }
+        callTokenHandlers(storage: storage)
         
         // Check EOF
         if !storage.string.isEmpty && storage.string.last != "\n" {
@@ -286,20 +264,6 @@ public class Editor: NSObject {
             storage.append(NSAttributedString(string: "\n"))
             textView.selectedRanges = prev
         }
-    }
-    
-    public func subscribe(toToken scope: String, handler: @escaping TokenHandler) {
-        if tokenHandlers.keys.contains(scope) {
-            tokenHandlers[scope]?.append(handler)
-        }
-        else {
-            tokenHandlers[scope] = [handler]
-        }
-        // Make first call
-        guard let storage = textView.textStorage as? EditorTextStorage else {
-            return
-        }
-        handler(storage.getTokens(forScope: scope))
     }
 }
 
@@ -345,10 +309,9 @@ extension Editor: NSTextViewDelegate {
     }
 }
 
-
-
 #endif
 
+// MARK: - Common
 extension Editor: NSLayoutManagerDelegate {
 
     private func resetGlyphPropertiesIfNeeded(textStorage: NSTextStorage) {
@@ -360,8 +323,7 @@ extension Editor: NSLayoutManagerDelegate {
         shouldResetGlyphProperties = false
     }
 
-    // MARK: - NSLayoutManagerDelegate
-
+    // MARK: NSLayoutManagerDelegate
     public func layoutManager(_: NSLayoutManager, didCompleteLayoutFor _: NSTextContainer?, atEnd layoutFinishedFlag: Bool) {
         // The layout pass is done, reset the glyph properties on the next glyph generation pass.
         shouldResetGlyphProperties = layoutFinishedFlag
@@ -416,4 +378,26 @@ extension Editor: NSLayoutManagerDelegate {
 
 extension Editor {
     
+    public func subscribe(toToken scope: String, handler: @escaping TokenHandler) {
+        if tokenHandlers.keys.contains(scope) {
+            tokenHandlers[scope]?.append(handler)
+        }
+        else {
+            tokenHandlers[scope] = [handler]
+        }
+        // Make first call
+        guard let storage = textView.textStorage as? EditorTextStorage else {
+            return
+        }
+        handler(storage.getTokens(forScope: scope))
+    }
+    
+    private func callTokenHandlers(storage: EditorTextStorage) {
+        for tokenHandlers in self.tokenHandlers {
+            let tokens = storage.getTokens(forScope: tokenHandlers.key)
+            for handler in tokenHandlers.value {
+                handler(tokens)
+            }
+        }
+    }
 }

@@ -8,6 +8,7 @@
 import Foundation
 import EditorCore
 
+// MARK: - iOS
 #if os(iOS)
 import UIKit
 
@@ -39,50 +40,22 @@ public class EditorTextView: UITextView {
     /// Boolean value to determine whether the indentation pattern of the current line should be followed on the insertion of a new line.
     public var autoIndent = true
     
-    
-    // MARK: - Constructors
-    
     public override init(frame: CGRect, textContainer: NSTextContainer?) {
         super.init(frame: frame, textContainer: textContainer)
-        
-        commonInit()
     }
     
     public required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        
-        commonInit()
-    }
-    
-//    var storage: EditorTextStorage?
-     
-    private func commonInit() {
-//        textStorage.removeLayoutManager(textStorage.layoutManagers.first!)
-//
-//        // Create NSLayoutManager subclass
-//        let manager = EditorLayoutManager()
-//
-//        // Update EditorTextStorage subclass
-//        storage = EditorTextStorage(parser: Parser(grammars: []), baseGrammar: .default, theme: .default)
-//        storage?.append(attributedText ?? NSAttributedString(string: ""))
-//
-//        manager.textStorage = storage
-//
-//        textContainer.replaceLayoutManager(manager)
-//
-//        print(textContainer)
-//        print(textStorage is EditorTextStorage)
-//        print(layoutManager)
+        fatalError("\(#function) is not supported")
     }
     
     public static func create(frame: CGRect) -> EditorTextView {
-        // 1
+        // Create text storage
         let textStorage = EditorTextStorage(parser: Parser(grammars: []), baseGrammar: .default, theme: .default)
         
-        // 2
+        // Create layout manager
         let layoutManager = EditorLayoutManager()
 
-        // 3
+        // Create container
         let containerSize = CGSize(width: frame.width,
                                  height: .greatestFiniteMagnitude)
         let container = NSTextContainer(size: containerSize)
@@ -90,19 +63,8 @@ public class EditorTextView: UITextView {
         layoutManager.addTextContainer(container)
         textStorage.addLayoutManager(layoutManager)
 
-        // 4
+        // Create text view
         return EditorTextView(frame: frame, textContainer: container)
-    }
-    
-    internal func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
-        _parser = parser
-        _grammar = baseGrammar
-        _theme = theme
-        guard let storage = textStorage as? EditorTextStorage else {
-            print("Cannot set grammar and theme on text storage because it is not of type EditorTextStorage")
-            return
-        }
-        storage.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
     }
     
     func boundingRect(forCharacterRange range: NSRange) -> CGRect? {
@@ -114,7 +76,7 @@ public class EditorTextView: UITextView {
     }
 }
 
-
+// MARK: - macOS
 #elseif os(macOS)
 import Cocoa
 
@@ -275,17 +237,6 @@ public class EditorTextView: NSTextView {
         }
     }
     
-    internal func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
-        _parser = parser
-        _grammar = baseGrammar
-        _theme = theme
-        guard let storage = textStorage as? EditorTextStorage else {
-            print("Cannot set grammar and them on text storage because it is not of type EditorTextStorage")
-            return
-        }
-        storage.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
-    }
-    
     func boundingRect(forCharacterRange range: NSRange) -> CGRect? {
         guard let layoutManager = layoutManager else { return nil }
         guard let textContainer = textContainer else { return nil }
@@ -350,3 +301,17 @@ public class EditorTextView: NSTextView {
 }
 
 #endif
+
+// MARK: - Common
+extension EditorTextView {
+    internal func replace(parser: Parser, baseGrammar: Grammar, theme: Theme) {
+        _parser = parser
+        _grammar = baseGrammar
+        _theme = theme
+        guard let storage = textStorage as? EditorTextStorage else {
+            print("Cannot set grammar and them on text storage because it is not of type EditorTextStorage")
+            return
+        }
+        storage.replace(parser: parser, baseGrammar: baseGrammar, theme: theme)
+    }
+}

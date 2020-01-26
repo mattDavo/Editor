@@ -8,6 +8,7 @@
 import Foundation
 import EditorCore
 
+// MARK: - iOS
 #if os(iOS)
 import UIKit
 
@@ -54,7 +55,7 @@ public class EditorLayoutManager: NSLayoutManager {
                     newRect = newRect.insetBy(dx: leftInset + rightInset, dy: 0)
                     newRect = newRect.offsetBy(dx: (leftInset - rightInset)/2, dy: 0)
                     
-                    self.fillRoundedBackgroundRectArray(newRect, color: roundedBackground.color, cornerRadius: cornerRadius)
+                    self.fillRoundedBackgroundRect(newRect, color: roundedBackground.color, cornerRadius: cornerRadius)
                 }
             }
             else if roundedBackground.coloringStyle == .line {
@@ -64,7 +65,7 @@ public class EditorLayoutManager: NSLayoutManager {
                 // Adjust for text container insets
                 rect = rect.offsetBy(dx: origin.x, dy: origin.y)
                 
-                self.fillRoundedBackgroundRectArray(rect, color: roundedBackground.color, cornerRadius: cornerRadius)
+                self.fillRoundedBackgroundRect(rect, color: roundedBackground.color, cornerRadius: cornerRadius)
             }
         })
     }
@@ -104,61 +105,7 @@ public class EditorLayoutManager: NSLayoutManager {
         return blockRect!
     }
     
-    // Adapted from: https://stackoverflow.com/a/44303971
-    func fillRoundedBackgroundRectArray(_ rectArray: UnsafePointer<Rect>, count rectCount: Int, color: Color, cornerRadius: CGFloat) {
-        
-        let path = CGMutablePath()
-
-        if rectCount == 1 || (rectCount == 2 && (rectArray[1].maxX < rectArray[0].maxX)) {
-            path.addRect(rectArray[0].insetBy(dx: cornerRadius, dy: cornerRadius))
-
-            if rectCount == 2 {
-                path.addRect(rectArray[1].insetBy(dx: cornerRadius, dy: cornerRadius))
-            }
-
-        }
-        else {
-            let lastRect = rectCount - 1
-
-            path.move(to: CGPoint(x: rectArray[0].minX + cornerRadius, y: rectArray[0].maxY + cornerRadius))
-
-            path.addLine(to: CGPoint(x: rectArray[0].minX + cornerRadius, y: rectArray[0].minY + cornerRadius))
-            path.addLine(to: CGPoint(x: rectArray[0].maxX - cornerRadius, y: rectArray[0].minY + cornerRadius))
-
-            path.addLine(to: CGPoint(x: rectArray[0].maxX - cornerRadius, y: rectArray[lastRect].minY - cornerRadius))
-            path.addLine(to: CGPoint(x: rectArray[lastRect].maxX - cornerRadius, y: rectArray[lastRect].minY - cornerRadius))
-
-            path.addLine(to: CGPoint(x: rectArray[lastRect].maxX - cornerRadius, y: rectArray[lastRect].maxY - cornerRadius))
-            path.addLine(to: CGPoint(x: rectArray[lastRect].minX + cornerRadius, y: rectArray[lastRect].maxY - cornerRadius))
-
-            path.addLine(to: CGPoint(x: rectArray[lastRect].minX + cornerRadius, y: rectArray[0].maxY + cornerRadius))
-
-            path.closeSubpath()
-
-        }
-
-        color.set()
-        
-        let context = UIGraphicsGetCurrentContext()
-        
-        context?.setLineWidth(cornerRadius * 2.0)
-        context?.setLineJoin(.round)
-
-        context?.setAllowsAntialiasing(true)
-        context?.setShouldAntialias(true)
-
-        context?.addPath(path)
-        context?.drawPath(using: .fillStroke)
-    }
-    
-    func fillRoundedBackgroundRectArray(_ rect: Rect, color: Color, cornerRadius: CGFloat) {
-        
-        let path = CGMutablePath()
-
-        path.addRect(rect.insetBy(dx: cornerRadius, dy: cornerRadius))
-
-        color.set()
-        
+    private func drawBackground(path: CGPath, cornerRadius: CGFloat) {
         let context = UIGraphicsGetCurrentContext()
         context?.setLineWidth(cornerRadius * 2.0)
         context?.setLineJoin(.round)
@@ -171,6 +118,7 @@ public class EditorLayoutManager: NSLayoutManager {
     }
 }
 
+// MARK: - macOS
 #elseif os(macOS)
 import Cocoa
 
@@ -179,7 +127,8 @@ public typealias Rect = NSRect
 
 public class EditorLayoutManager: NSLayoutManager {
     
-    // Inspiration from : https://instagram-engineering.com/building-type-mode-for-stories-on-ios-and-android-8804e927feba
+    /// Custom background drawing is done first, then default background drawing is done, potentially overriding the custom background drawing.
+    /// Inspiration from : https://instagram-engineering.com/building-type-mode-for-stories-on-ios-and-android-8804e927feba
     override public func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: Point) {
         defer {
             // Call super last to apply normal highlighting with higher priority.
@@ -233,7 +182,7 @@ public class EditorLayoutManager: NSLayoutManager {
                 // Adjust for text container insets
                 rect = rect.offsetBy(dx: origin.x, dy: origin.y)
                 
-                self.fillRoundedBackgroundRectArray(rect, color: roundedBackground.color, cornerRadius: cornerRadius)
+                self.fillRoundedBackgroundRect(rect, color: roundedBackground.color, cornerRadius: cornerRadius)
             }
         })
     }
@@ -276,8 +225,29 @@ public class EditorLayoutManager: NSLayoutManager {
     // Adapted from: https://stackoverflow.com/a/44303971
     func fillRoundedBackgroundRectArray(_ rectArray: UnsafePointer<Rect>, count rectCount: Int, color: Color, cornerRadius: CGFloat) {
         
-        let path = CGMutablePath()
+        let path = getRoundedBackgroundPath(rectArray, count: rectCount, cornerRadius: cornerRadius)
 
+        color.set()
+        
+        drawBackground(path: path, cornerRadius: cornerRadius)
+    }
+    
+    private func drawBackground(path: CGPath, cornerRadius: CGFloat) {
+        let cgContext = NSGraphicsContext.current?.cgContext
+        cgContext?.setLineWidth(cornerRadius * 2.0)
+        cgContext?.setLineJoin(.round)
+
+        cgContext?.setAllowsAntialiasing(true)
+        cgContext?.setShouldAntialias(true)
+
+        cgContext?.addPath(path)
+        cgContext?.drawPath(using: .fillStroke)
+    }
+    
+    func getRoundedBackgroundPath(_ rectArray: UnsafePointer<Rect>, count rectCount: Int, cornerRadius: CGFloat) -> CGPath {
+        
+        let path = CGMutablePath()
+        
         if rectCount == 1 || (rectCount == 2 && (rectArray[1].maxX < rectArray[0].maxX)) {
             path.addRect(rectArray[0].insetBy(dx: cornerRadius, dy: cornerRadius))
 
@@ -303,40 +273,24 @@ public class EditorLayoutManager: NSLayoutManager {
             path.addLine(to: CGPoint(x: rectArray[lastRect].minX + cornerRadius, y: rectArray[0].maxY + cornerRadius))
 
             path.closeSubpath()
-
         }
-
-        color.set()
         
-        let cgContext = NSGraphicsContext.current?.cgContext
-        cgContext?.setLineWidth(cornerRadius * 2.0)
-        cgContext?.setLineJoin(.round)
-
-        cgContext?.setAllowsAntialiasing(true)
-        cgContext?.setShouldAntialias(true)
-
-        cgContext?.addPath(path)
-        cgContext?.drawPath(using: .fillStroke)
+        return path
     }
+}
+
+#endif
+
+// MARK: - Common
+extension EditorLayoutManager {
     
-    func fillRoundedBackgroundRectArray(_ rect: Rect, color: Color, cornerRadius: CGFloat) {
-        
+    func fillRoundedBackgroundRect(_ rect: Rect, color: Color, cornerRadius: CGFloat) {
         let path = CGMutablePath()
 
         path.addRect(rect.insetBy(dx: cornerRadius, dy: cornerRadius))
 
         color.set()
         
-        let cgContext = NSGraphicsContext.current?.cgContext
-        cgContext?.setLineWidth(cornerRadius * 2.0)
-        cgContext?.setLineJoin(.round)
-
-        cgContext?.setAllowsAntialiasing(true)
-        cgContext?.setShouldAntialias(true)
-
-        cgContext?.addPath(path)
-        cgContext?.drawPath(using: .fillStroke)
+        drawBackground(path: path, cornerRadius: cornerRadius)
     }
 }
-
-#endif
