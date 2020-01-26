@@ -82,6 +82,7 @@ let readMeExampleTheme = Theme(name: "basic", settings: [
 Finally we will take our `NSTextView` subclass `EditorTextView` and give it to our `Editor` with the grammar and theme.
 ```Swift
 import Cocoa
+import EditorCore
 import EditorUI
 
 class ViewController: NSViewController {
@@ -104,6 +105,10 @@ class ViewController: NSViewController {
 
 We can also apply the same `Grammar` and `Theme` to an iOS version of the app, like so:
 ```Swift
+import UIKit
+import EditorCore
+import EditorUI
+
 class ViewController: UIViewController {
 
     var textView: EditorTextView!
