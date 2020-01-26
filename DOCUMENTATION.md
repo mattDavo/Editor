@@ -249,17 +249,17 @@ However, it is unlikely that you will use these methods as `Editor`, `EditorText
 
 
 ## `EditorUI`
-`EditorUI` integrates `EditorCore` into `Cocoa`'s `NSTextView` and will be integrated into `UIKit`'s `UITextView`. `EditorCore` contains the following:
+`EditorUI` integrates `EditorCore` into `Cocoa`'s `NSTextView` and  `UIKit`'s `UITextView`. `EditorCore` contains the following:
 - `EditorTextStorage` is the implementation of `NSTextStorage` which handles the interaction with `EditorCore`.
 - `EditorLayoutManager` is a subclass of `NSLayoutManager` used to implement custom `ThemeAttribute`s.
-- `EditorTextView` is a subclass of `NSTextView` implementing custom features.
+- `EditorTextView` is a subclass of `NSTextView`/`UITextView` implementing custom features.
 - `Editor` is a holds the `EditorTextView` and coordinates all the `Editor` functionality.
 - `LineNumberGutter` is an `NSRulerView` for adding line numbers to your `EditorTextView`.
 - Default `ThemeAttributes`.
 
-Currently, `EditorTextView` it is only built for `NSTextView`, however, since `UITextView` shares a lot of the internals, there is not a lot of work required to implement `EditorTextView` for it. 
+Currently, `EditorTextView` contains more features on macOS. 
 
-### `EditorTextView`
+### `EditorTextView` [macOS features only]
 If you are creating a code editor or just don't want tabs you can indent with spaces instead of tabs:
 ```Swift
 editorTextView.indentUsingSpaces = true
@@ -284,7 +284,7 @@ editorTextView.gutterCurrentLineForegroundColor = .selectedTextColor
 editorTextView.gutterWidth = 60
 ```
 
-### `Editor`
+### `Editor` [iOS + macOS]
 Create an editor like so, where the `baseGrammar` is the grammar that should initialise the state of the tokenization of the text. Remember if the base grammar has included grammars in its definition they should also be registered in the `Parser`!
 ```Swift
 let editor = Editor(textView: textView, parser: parser, baseGrammar: exampleGrammar, theme: exampleTheme)

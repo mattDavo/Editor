@@ -102,6 +102,31 @@ class ViewController: NSViewController {
 }
 ```
 
+We can also apply the same `Grammar` and `Theme` to an iOS version of the app, like so:
+```Swift
+class ViewController: UIViewController {
+
+    var textView: EditorTextView!
+    var parser: Parser!
+    var editor: Editor!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        textView = .create(frame: view.frame)
+        view.addSubview(textView)
+        
+        textView.text = bigText
+        textView.linkTextAttributes?.removeValue(forKey: .foregroundColor)
+        
+        parser = Parser(grammars: [exampleGrammar, basicSwiftGrammar])
+        parser.shouldDebug = false
+        editor = Editor(textView: textView, parser: parser, baseGrammar: exampleGrammar, theme: exampleTheme)
+    }
+}
+```
+However, Editor for iOS does contain the full breadth of features that are for macOS.
+
 And voilà! With the appropriate settings in the interface builder this will produce the nice editor above.
 
 Be sure to read the [Documentation](https://github.com/mattDavo/Editor/blob/master/DOCUMENTATION.md) to understand what the above code is doing so that you can create your own editors!
